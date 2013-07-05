@@ -15,7 +15,7 @@ The API of CastMapR is heavily inspired by the MapReduce implementation of Infin
 
 ```java
 HazelcastInstance instance = Hazelcast.newHazelcastInstance();
-IMap<Integer, Integer> map = instance.getMap("someMap");
+IMap<Integer, Integer> map = instance.getMap( "someMap" );
 
 // Retrieve an instance of MapReduceTaskFactory
 MapReduceTaskFactory factory = MapReduceTaskFactory.newInstance( instance );
