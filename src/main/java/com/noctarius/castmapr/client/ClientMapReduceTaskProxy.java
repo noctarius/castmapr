@@ -38,12 +38,12 @@ public class ClientMapReduceTaskProxy<KeyIn, ValueIn, KeyOut, ValueOut>
     }
 
     @Override
-    protected Map<Integer, Object> invokeTasks()
+    protected Map<Integer, Object> invokeTasks( boolean distributableReducer )
         throws Exception
     {
         ClientInvocationService cis = context.getInvocationService();
         MapReduceRequest<KeyIn, ValueIn, KeyOut, ValueOut> request;
-        request = new MapReduceRequest<KeyIn, ValueIn, KeyOut, ValueOut>( name, mapper, reducer );
+        request = new MapReduceRequest<KeyIn, ValueIn, KeyOut, ValueOut>( name, mapper, reducer, distributableReducer );
         return cis.invokeOnRandomTarget( request );
     }
 
@@ -89,7 +89,7 @@ public class ClientMapReduceTaskProxy<KeyIn, ValueIn, KeyOut, ValueOut>
             try
             {
                 MapReduceRequest<KeyIn, ValueIn, KeyOut, ValueOut> request;
-                request = new MapReduceRequest<KeyIn, ValueIn, KeyOut, ValueOut>( name, mapper, reducer );
+                request = new MapReduceRequest( name, mapper, reducer, isDistributableReducer() );
                 Map<Integer, Object> responses = cis.invokeOnRandomTarget( request );
                 Map groupedResponses = groupResponsesByKey( responses );
                 Map reducedResults = finalReduceStep( groupedResponses );

@@ -27,6 +27,7 @@ import com.noctarius.castmapr.MapReduceCollatorListener;
 import com.noctarius.castmapr.MapReduceListener;
 import com.noctarius.castmapr.MapReduceTask;
 import com.noctarius.castmapr.spi.Collator;
+import com.noctarius.castmapr.spi.Distributable;
 import com.noctarius.castmapr.spi.Mapper;
 import com.noctarius.castmapr.spi.Reducer;
 
@@ -72,7 +73,8 @@ public abstract class AbstractMapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut>
     {
         try
         {
-            Map<Integer, Object> responses = invokeTasks();
+
+            Map<Integer, Object> responses = invokeTasks( isDistributableReducer() );
             Map<KeyOut, List<ValueOut>> groupedResponses = groupResponsesByKey( responses );
             return (Map<KeyIn, ValueIn>) finalReduceStep( groupedResponses );
         }
@@ -110,14 +112,14 @@ public abstract class AbstractMapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut>
         // Final local reduce step
         for ( Entry<KeyOut, List<ValueOut>> entry : groupedResponses.entrySet() )
         {
-            if ( reducer != null )
+            if ( isDistributableReducer() )
             {
                 reducedResults.put( entry.getKey(), reducer.reduce( entry.getKey(), entry.getValue().iterator() ) );
             }
             else
             {
                 List results = new ArrayList( groupedResponses.size() );
-                for ( Object value : entry.getValue() )
+                for ( Object value : prepareIntermediateResults( entry.getValue() ) )
                 {
                     // Eventually aggregate subresults to one big result list
                     if ( value instanceof List )
@@ -132,10 +134,42 @@ public abstract class AbstractMapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut>
                         results.add( value );
                     }
                 }
-                reducedResults.put( entry.getKey(), (ValueOut) results );
+                if ( reducer != null )
+                {
+                    reducedResults.put( entry.getKey(), reducer.reduce( entry.getKey(), results.iterator() ) );
+                }
+                else
+                {
+                    reducedResults.put( entry.getKey(), (ValueOut) results );
+                }
             }
         }
         return reducedResults;
+    }
+
+    protected List<ValueOut> prepareIntermediateResults( Object value )
+    {
+        // If reducer was just not distributable collect intermediate results
+        if ( reducer != null && !isDistributableReducer() && value instanceof List )
+        {
+            List<ValueOut> intermediateResults = new ArrayList<ValueOut>();
+            for ( Object list : ( (List) value ) )
+            {
+                if ( list instanceof List )
+                {
+                    for ( Object innerValue : (List) list )
+                    {
+                        intermediateResults.add( (ValueOut) innerValue );
+                    }
+                }
+                else
+                {
+                    intermediateResults.add( (ValueOut) value );
+                }
+            }
+            return intermediateResults;
+        }
+        return (List<ValueOut>) value;
     }
 
     protected Map<KeyOut, List<ValueOut>> groupResponsesByKey( Map<Integer, Object> responses )
@@ -158,7 +192,18 @@ public abstract class AbstractMapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut>
         return groupedResponses;
     }
 
-    protected abstract Map<Integer, Object> invokeTasks()
+    protected boolean isDistributableReducer()
+    {
+        if ( reducer == null )
+        {
+            return false;
+        }
+
+        Class<? extends Reducer> clazz = reducer.getClass();
+        return clazz.isAnnotationPresent( Distributable.class );
+    }
+
+    protected abstract Map<Integer, Object> invokeTasks( boolean distributableReducer )
         throws Exception;
 
     protected abstract <R> MapReduceBackgroundTask<R> buildMapReduceBackgroundTask( MapReduceListener<KeyIn, ValueIn> listener );

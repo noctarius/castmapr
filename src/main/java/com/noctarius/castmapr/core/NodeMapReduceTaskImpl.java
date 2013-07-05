@@ -26,6 +26,7 @@ import com.noctarius.castmapr.MapReduceCollatorListener;
 import com.noctarius.castmapr.MapReduceListener;
 import com.noctarius.castmapr.core.operation.MapReduceOperation;
 import com.noctarius.castmapr.spi.Collator;
+import com.noctarius.castmapr.spi.Reducer;
 
 public class NodeMapReduceTaskImpl<KeyIn, ValueIn, KeyOut, ValueOut>
     extends AbstractMapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut>
@@ -40,12 +41,14 @@ public class NodeMapReduceTaskImpl<KeyIn, ValueIn, KeyOut, ValueOut>
     }
 
     @Override
-    protected Map<Integer, Object> invokeTasks()
+    protected Map<Integer, Object> invokeTasks( boolean distributableReducer )
         throws Exception
     {
         OperationService os = nodeEngine.getOperationService();
+
+        Reducer r = distributableReducer ? reducer : null;
         MapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut> operation;
-        operation = new MapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>( name, mapper, reducer );
+        operation = new MapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>( name, mapper, r );
         operation.setNodeEngine( nodeEngine ).setCallerUuid( nodeEngine.getLocalMember().getUuid() );
         return os.invokeOnAllPartitions( MapService.SERVICE_NAME, new BinaryOperationFactory( operation, nodeEngine ) );
     }
@@ -89,8 +92,9 @@ public class NodeMapReduceTaskImpl<KeyIn, ValueIn, KeyOut, ValueOut>
         public void run()
         {
             OperationService os = nodeEngine.getOperationService();
+            Reducer r = isDistributableReducer() ? reducer : null;
             MapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut> operation;
-            operation = new MapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>( name, mapper, reducer );
+            operation = new MapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>( name, mapper, r );
             operation.setNodeEngine( nodeEngine ).setCallerUuid( nodeEngine.getLocalMember().getUuid() );
             try
             {

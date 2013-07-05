@@ -37,6 +37,8 @@ public class MapReduceRequest<KeyIn, ValueIn, KeyOut, ValueOut>
 
     private Reducer<KeyOut, ValueOut> reducer;
 
+    private boolean distributableReducer;
+
     private String name;
 
     public MapReduceRequest()
@@ -44,11 +46,12 @@ public class MapReduceRequest<KeyIn, ValueIn, KeyOut, ValueOut>
     }
 
     public MapReduceRequest( String name, Mapper<KeyIn, ValueIn, KeyOut, ValueOut> mapper,
-                             Reducer<KeyOut, ValueOut> reducer )
+                             Reducer<KeyOut, ValueOut> reducer, boolean distributableReducer )
     {
         this.name = name;
         this.mapper = mapper;
         this.reducer = reducer;
+        this.distributableReducer = distributableReducer;
     }
 
     @Override
@@ -58,6 +61,7 @@ public class MapReduceRequest<KeyIn, ValueIn, KeyOut, ValueOut>
         out.writeUTF( name );
         out.writeObject( mapper );
         out.writeObject( reducer );
+        out.writeBoolean( distributableReducer );
     }
 
     @Override
@@ -67,12 +71,14 @@ public class MapReduceRequest<KeyIn, ValueIn, KeyOut, ValueOut>
         name = in.readUTF();
         mapper = in.readObject();
         reducer = in.readObject();
+        distributableReducer = in.readBoolean();
     }
 
     @Override
     protected OperationFactory createOperationFactory()
     {
-        return new MapReduceOperationFactory<KeyIn, ValueIn, KeyOut, ValueOut>( name, mapper, reducer );
+        return new MapReduceOperationFactory<KeyIn, ValueIn, KeyOut, ValueOut>( name, mapper, reducer,
+                                                                                distributableReducer );
     }
 
     @Override

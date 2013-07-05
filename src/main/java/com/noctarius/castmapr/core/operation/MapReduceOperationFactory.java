@@ -31,6 +31,8 @@ public class MapReduceOperationFactory<KeyIn, ValueIn, KeyOut, ValueOut>
 
     private Reducer<KeyOut, ValueOut> reducer;
 
+    private boolean distributableReducer;
+
     private String name;
 
     public MapReduceOperationFactory()
@@ -38,11 +40,12 @@ public class MapReduceOperationFactory<KeyIn, ValueIn, KeyOut, ValueOut>
     }
 
     public MapReduceOperationFactory( String name, Mapper<KeyIn, ValueIn, KeyOut, ValueOut> mapper,
-                                      Reducer<KeyOut, ValueOut> reducer )
+                                      Reducer<KeyOut, ValueOut> reducer, boolean distributableReducer )
     {
         this.name = name;
         this.mapper = mapper;
         this.reducer = reducer;
+        this.distributableReducer = distributableReducer;
     }
 
     @Override
@@ -52,6 +55,7 @@ public class MapReduceOperationFactory<KeyIn, ValueIn, KeyOut, ValueOut>
         out.writeUTF( name );
         out.writeObject( mapper );
         out.writeObject( reducer );
+        out.writeBoolean( distributableReducer );
     }
 
     @Override
@@ -61,12 +65,14 @@ public class MapReduceOperationFactory<KeyIn, ValueIn, KeyOut, ValueOut>
         name = in.readUTF();
         mapper = in.readObject();
         reducer = in.readObject();
+        distributableReducer = in.readBoolean();
     }
 
     @Override
     public Operation createOperation()
     {
-        return new MapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>( name, mapper, reducer );
+        Reducer r = distributableReducer ? reducer : null;
+        return new MapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>( name, mapper, r );
     }
 
 }
