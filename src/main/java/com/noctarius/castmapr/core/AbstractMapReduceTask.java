@@ -22,12 +22,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.HazelcastInstanceAware;
 import com.hazelcast.util.ExceptionUtil;
 import com.noctarius.castmapr.MapReduceCollatorListener;
 import com.noctarius.castmapr.MapReduceListener;
 import com.noctarius.castmapr.MapReduceTask;
 import com.noctarius.castmapr.spi.Collator;
 import com.noctarius.castmapr.spi.Distributable;
+import com.noctarius.castmapr.spi.DistributableReducer;
 import com.noctarius.castmapr.spi.Mapper;
 import com.noctarius.castmapr.spi.Reducer;
 
@@ -37,13 +40,16 @@ public abstract class AbstractMapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut>
 
     protected final String name;
 
+    protected final HazelcastInstance hazelcastInstance;
+
     protected Mapper<KeyIn, ValueIn, KeyOut, ValueOut> mapper;
 
     protected Reducer<KeyOut, ValueOut> reducer;
 
-    public AbstractMapReduceTask( String name )
+    public AbstractMapReduceTask( String name, HazelcastInstance hazelcastInstance )
     {
         this.name = name;
+        this.hazelcastInstance = hazelcastInstance;
     }
 
     @Override
@@ -109,6 +115,12 @@ public abstract class AbstractMapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut>
     protected Map<KeyOut, ValueOut> finalReduceStep( Map<KeyOut, List<ValueOut>> groupedResponses )
     {
         Map<KeyOut, ValueOut> reducedResults = new HashMap<KeyOut, ValueOut>();
+
+        if ( reducer instanceof HazelcastInstanceAware )
+        {
+            ( (HazelcastInstanceAware) reducer ).setHazelcastInstance( hazelcastInstance );
+        }
+
         // Final local reduce step
         for ( Entry<KeyOut, List<ValueOut>> entry : groupedResponses.entrySet() )
         {
@@ -200,7 +212,12 @@ public abstract class AbstractMapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut>
         }
 
         Class<? extends Reducer> clazz = reducer.getClass();
-        return clazz.isAnnotationPresent( Distributable.class );
+        if ( clazz.isAnnotationPresent( Distributable.class ) )
+        {
+            return true;
+        }
+
+        return DistributableReducer.class.isAssignableFrom( clazz );
     }
 
     protected abstract Map<Integer, Object> invokeTasks( boolean distributableReducer )

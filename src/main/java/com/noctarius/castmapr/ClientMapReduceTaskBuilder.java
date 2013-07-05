@@ -45,8 +45,11 @@ class ClientMapReduceTaskBuilder<KeyIn, ValueIn, KeyOut, ValueOut>
         GET_CLIENTCONTEXT_METHOD = getClientContextMethod;
     }
 
+    private final HazelcastInstance hazelcastInstance;
+
     ClientMapReduceTaskBuilder( HazelcastInstance hazelcastInstance )
     {
+        this.hazelcastInstance = hazelcastInstance;
     }
 
     @Override
@@ -56,7 +59,8 @@ class ClientMapReduceTaskBuilder<KeyIn, ValueIn, KeyOut, ValueOut>
         {
             ClientMapProxy<KeyIn, ValueIn> proxy = (ClientMapProxy<KeyIn, ValueIn>) map;
             ClientContext context = (ClientContext) GET_CLIENTCONTEXT_METHOD.invoke( proxy );
-            return new ClientMapReduceTaskProxy<KeyIn, ValueIn, KeyOut, ValueOut>( proxy.getName(), context );
+            return new ClientMapReduceTaskProxy<KeyIn, ValueIn, KeyOut, ValueOut>( proxy.getName(), context,
+                                                                                   hazelcastInstance );
         }
         catch ( Throwable t )
         {

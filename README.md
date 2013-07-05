@@ -41,10 +41,25 @@ public class MyMapper extends Mapper<Integer, Integer, String, Integer> {
 }
 ```
 
-For reducing algorithms you need to implement the Reducer class. For Reducer implementation that are capable of running in distributed environments and (maybe multiple times) can be marked with @Distributable.
+For reducing algorithms you need to implement the Reducer class. For Reducer implementation that are capable of running in distributed environments and (maybe multiple times) can be marked with @Distributable or by implementing DistributableReducer.
 ```java
 @Distributable
 public static class MyReducer implements Reducer<String, Integer>
+{
+  @Override
+  public Integer reduce( String key, Iterator<Integer> values )
+  {
+    int sum = 0;
+    while ( values.hasNext() )
+    {
+      sum += values.next();
+    }
+    return sum;
+  }
+}
+```
+```java
+public static class MyReducer implements DistributableReducer<String, Integer>
 {
   @Override
   public Integer reduce( String key, Iterator<Integer> values )

@@ -70,7 +70,8 @@ public class NodeMapReduceTaskBuilder<KeyIn, ValueIn, KeyOut, ValueOut>
         {
             MapProxyImpl proxy = (MapProxyImpl) map;
             NodeEngine nodeEngine = hazelcastInstance.node.nodeEngine;
-            return new NodeMapReduceTaskImpl<KeyIn, ValueIn, KeyOut, ValueOut>( proxy.getName(), nodeEngine );
+            return new NodeMapReduceTaskImpl<KeyIn, ValueIn, KeyOut, ValueOut>( proxy.getName(), nodeEngine,
+                                                                                hazelcastInstance );
         }
         catch ( Throwable t )
         {

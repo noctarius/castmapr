@@ -133,4 +133,5 @@ public class MapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>
         mapper = in.readObject();
         reducer = in.readObject();
     }
+
 }

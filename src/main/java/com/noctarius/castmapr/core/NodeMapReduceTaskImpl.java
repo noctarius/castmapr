@@ -17,6 +17,7 @@ package com.noctarius.castmapr.core;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
+import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.MapService;
 import com.hazelcast.spi.NodeEngine;
 import com.hazelcast.spi.OperationService;
@@ -34,9 +35,9 @@ public class NodeMapReduceTaskImpl<KeyIn, ValueIn, KeyOut, ValueOut>
 
     private final NodeEngine nodeEngine;
 
-    public NodeMapReduceTaskImpl( String name, NodeEngine nodeEngine )
+    public NodeMapReduceTaskImpl( String name, NodeEngine nodeEngine, HazelcastInstance hazelcastInstance )
     {
-        super( name );
+        super( name, hazelcastInstance );
         this.nodeEngine = nodeEngine;
     }
 

@@ -19,6 +19,7 @@ import java.util.Map;
 import com.hazelcast.client.spi.ClientContext;
 import com.hazelcast.client.spi.ClientExecutionService;
 import com.hazelcast.client.spi.ClientInvocationService;
+import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.util.ExceptionUtil;
 import com.noctarius.castmapr.MapReduceCollatorListener;
 import com.noctarius.castmapr.MapReduceListener;
@@ -31,9 +32,9 @@ public class ClientMapReduceTaskProxy<KeyIn, ValueIn, KeyOut, ValueOut>
 
     private final ClientContext context;
 
-    public ClientMapReduceTaskProxy( String name, ClientContext context )
+    public ClientMapReduceTaskProxy( String name, ClientContext context, HazelcastInstance hazelcastInstance )
     {
-        super( name );
+        super( name, hazelcastInstance );
         this.context = context;
     }
 

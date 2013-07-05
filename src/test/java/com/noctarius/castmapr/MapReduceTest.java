@@ -258,7 +258,7 @@ public class MapReduceTest
         }
     }
 
-    @Test//( timeout = 20000 )
+    @Test( timeout = 20000 )
     public void testAsyncMapperReducer()
         throws Exception
     {
