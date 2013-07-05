@@ -16,10 +16,18 @@ package com.noctarius.castmapr.spi;
 
 import java.io.Serializable;
 
-public interface Mapper<KeyIn, ValueIn, KeyOut, ValueOut>
-    extends Serializable
+public abstract class Mapper<KeyIn, ValueIn, KeyOut, ValueOut>
+    implements Serializable
 {
 
-    void map( KeyIn key, ValueIn value, Collector<KeyOut, ValueOut> collector );
+    public void initialize( Collector<KeyOut, ValueOut> collector )
+    {
+    }
+
+    public abstract void map( KeyIn key, ValueIn value, Collector<KeyOut, ValueOut> collector );
+
+    public void finalized( Collector<KeyOut, ValueOut> collector )
+    {
+    }
 
 }

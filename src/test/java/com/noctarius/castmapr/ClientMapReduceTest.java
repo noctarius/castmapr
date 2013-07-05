@@ -370,7 +370,7 @@ public class ClientMapReduceTest
     }
 
     public static class TestMapper
-        implements Mapper<Integer, Integer, String, Integer>
+        extends Mapper<Integer, Integer, String, Integer>
     {
 
         @Override
@@ -381,7 +381,7 @@ public class ClientMapReduceTest
     }
 
     public static class GroupingTestMapper
-        implements Mapper<Integer, Integer, String, Integer>
+        extends Mapper<Integer, Integer, String, Integer>
     {
 
         @Override

@@ -410,7 +410,7 @@ public class MapReduceTest
     }
 
     public static class TestMapper
-        implements Mapper<Integer, Integer, String, Integer>
+        extends Mapper<Integer, Integer, String, Integer>
     {
 
         @Override
@@ -421,7 +421,7 @@ public class MapReduceTest
     }
 
     public static class GroupingTestMapper
-        implements Mapper<Integer, Integer, String, Integer>
+        extends Mapper<Integer, Integer, String, Integer>
     {
 
         private int moduleKey = -1;

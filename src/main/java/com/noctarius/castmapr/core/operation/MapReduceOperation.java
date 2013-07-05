@@ -73,14 +73,19 @@ public class MapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>
             IMap map = (IMap) proxyService.getDistributedObject( MapService.SERVICE_NAME, name );
             ( (MapAware) mapper ).setMap( map );
         }
-        RecordStore recordStore = mapService.getRecordStore( partitionId, name );
+
         CollectorImpl<KeyOut, ValueOut> collector = new CollectorImpl<KeyOut, ValueOut>();
+        RecordStore recordStore = mapService.getRecordStore( partitionId, name );
+
+        mapper.initialize( collector );
         for ( Entry<Data, Data> entry : recordStore.entrySetData() )
         {
             KeyIn key = (KeyIn) mapService.toObject( entry.getKey() );
             ValueIn value = (ValueIn) mapService.toObject( entry.getValue() );
             mapper.map( key, value, collector );
         }
+        mapper.finalized( collector );
+
         if ( reducer != null )
         {
             if ( reducer instanceof PartitionIdAware )
