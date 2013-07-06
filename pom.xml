@@ -169,12 +169,22 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
+        <version>2.9</version>
         <executions>
           <execution>
             <id>attach-javadocs</id>
             <goals>
               <goal>jar</goal>
             </goals>
+            <configuration>
+              <show>public</show>
+              <sourceFileIncludes>
+                <include>com/noctarius/castmapr/spi/*.java</include>
+                <include>com/noctarius/castmapr/MapReduceTask.java</include>
+                <include>com/noctarius/castmapr/MapReduceTaskFactory.java</include>
+              </sourceFileIncludes>
+              <excludePackageNames>com.noctarius.castmapr.client.*,com.noctarius.castmapr.core.*,com.noctarius.castmapr.core.operation.*</excludePackageNames>
+            </configuration>
           </execution>
         </executions>
       </plugin>

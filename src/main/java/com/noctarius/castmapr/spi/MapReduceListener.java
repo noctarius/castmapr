@@ -12,13 +12,11 @@
  * limitations under the License.
  */
 
-package com.noctarius.castmapr;
+package com.noctarius.castmapr.spi;
 
 import java.util.Map;
 
-import com.noctarius.castmapr.spi.Collator;
-import com.noctarius.castmapr.spi.Mapper;
-import com.noctarius.castmapr.spi.Reducer;
+import com.noctarius.castmapr.MapReduceTask;
 
 /**
  * This listener is used for retrieving asynchronous results on {@link MapReduceTask} using {@link Mapper} and

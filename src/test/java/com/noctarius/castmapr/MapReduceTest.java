@@ -38,6 +38,8 @@ import com.hazelcast.test.TestHazelcastInstanceFactory;
 import com.hazelcast.test.annotation.SerialTest;
 import com.noctarius.castmapr.spi.Collator;
 import com.noctarius.castmapr.spi.Collector;
+import com.noctarius.castmapr.spi.MapReduceCollatorListener;
+import com.noctarius.castmapr.spi.MapReduceListener;
 import com.noctarius.castmapr.spi.Mapper;
 import com.noctarius.castmapr.spi.Reducer;
 

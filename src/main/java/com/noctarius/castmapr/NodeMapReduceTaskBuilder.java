@@ -25,7 +25,7 @@ import com.hazelcast.spi.NodeEngine;
 import com.hazelcast.util.ExceptionUtil;
 import com.noctarius.castmapr.core.NodeMapReduceTaskImpl;
 
-public class NodeMapReduceTaskBuilder<KeyIn, ValueIn, KeyOut, ValueOut>
+class NodeMapReduceTaskBuilder<KeyIn, ValueIn, KeyOut, ValueOut>
     implements MapReduceTaskBuilder<KeyIn, ValueIn, KeyOut, ValueOut>
 {
 

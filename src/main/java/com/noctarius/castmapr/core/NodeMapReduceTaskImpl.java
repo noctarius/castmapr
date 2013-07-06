@@ -23,10 +23,10 @@ import com.hazelcast.spi.NodeEngine;
 import com.hazelcast.spi.OperationService;
 import com.hazelcast.spi.impl.BinaryOperationFactory;
 import com.hazelcast.util.ExceptionUtil;
-import com.noctarius.castmapr.MapReduceCollatorListener;
-import com.noctarius.castmapr.MapReduceListener;
 import com.noctarius.castmapr.core.operation.MapReduceOperation;
 import com.noctarius.castmapr.spi.Collator;
+import com.noctarius.castmapr.spi.MapReduceCollatorListener;
+import com.noctarius.castmapr.spi.MapReduceListener;
 import com.noctarius.castmapr.spi.Reducer;
 
 public class NodeMapReduceTaskImpl<KeyIn, ValueIn, KeyOut, ValueOut>

@@ -26,12 +26,12 @@ import java.util.concurrent.ExecutorService;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.HazelcastInstanceAware;
 import com.hazelcast.util.ExceptionUtil;
-import com.noctarius.castmapr.MapReduceCollatorListener;
-import com.noctarius.castmapr.MapReduceListener;
 import com.noctarius.castmapr.MapReduceTask;
 import com.noctarius.castmapr.spi.Collator;
 import com.noctarius.castmapr.spi.Distributable;
 import com.noctarius.castmapr.spi.DistributableReducer;
+import com.noctarius.castmapr.spi.MapReduceCollatorListener;
+import com.noctarius.castmapr.spi.MapReduceListener;
 import com.noctarius.castmapr.spi.Mapper;
 import com.noctarius.castmapr.spi.Reducer;
 

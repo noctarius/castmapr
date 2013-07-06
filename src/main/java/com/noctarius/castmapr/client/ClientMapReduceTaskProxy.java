@@ -21,10 +21,10 @@ import com.hazelcast.client.spi.ClientExecutionService;
 import com.hazelcast.client.spi.ClientInvocationService;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.util.ExceptionUtil;
-import com.noctarius.castmapr.MapReduceCollatorListener;
-import com.noctarius.castmapr.MapReduceListener;
 import com.noctarius.castmapr.core.AbstractMapReduceTask;
 import com.noctarius.castmapr.spi.Collator;
+import com.noctarius.castmapr.spi.MapReduceCollatorListener;
+import com.noctarius.castmapr.spi.MapReduceListener;
 
 public class ClientMapReduceTaskProxy<KeyIn, ValueIn, KeyOut, ValueOut>
     extends AbstractMapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut>

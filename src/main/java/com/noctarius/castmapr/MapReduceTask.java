@@ -20,6 +20,8 @@ import java.util.concurrent.ExecutorService;
 
 import com.hazelcast.core.IMap;
 import com.noctarius.castmapr.spi.Collator;
+import com.noctarius.castmapr.spi.MapReduceCollatorListener;
+import com.noctarius.castmapr.spi.MapReduceListener;
 import com.noctarius.castmapr.spi.Mapper;
 import com.noctarius.castmapr.spi.Reducer;
 
