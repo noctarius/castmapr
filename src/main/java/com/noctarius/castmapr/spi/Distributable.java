@@ -25,6 +25,13 @@ import java.lang.annotation.Target;
 @Documented
 @Target( { ElementType.TYPE } )
 @Retention( RetentionPolicy.RUNTIME )
+/**
+ * The {@link Distributable} annotation can be used to mark a {@link Reducer} as distributable.<br>
+ * Distributed {@link Reducer}s normally run multiple times on different hosts which for example is not a problem for sum-functions but can be a problem for other algorithms.<br>
+ * <b>Caution: {@link Reducer}s need to be marked as distributable in an explicit way!</b><br>
+ * An alternative to the usage of this annotation is implementing the {@link DistributableReducer} interface.
+ * @author noctarius
+ */
 public @interface Distributable
 {
 }

@@ -14,9 +14,23 @@
 
 package com.noctarius.castmapr.spi;
 
+/**
+ * The Collector interface is used for emitting keys and values to the sample space of the MapReduce algorith.
+ * 
+ * @author noctarius
+ * @param <Key> The key type of the resulting keys
+ * @param <Value> The value type of the resulting values
+ */
 public interface Collector<Key, Value>
 {
 
+    /**
+     * Emits a key-value pair to the sample space. The same key can be used multiple times to collect values under the
+     * same key.
+     * 
+     * @param key The emitted key.
+     * @param value The emitted value.
+     */
     void emit( Key key, Value value );
 
 }

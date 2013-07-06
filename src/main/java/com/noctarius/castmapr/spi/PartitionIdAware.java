@@ -14,9 +14,21 @@
 
 package com.noctarius.castmapr.spi;
 
+/**
+ * This interface can be used to mark {@link Mapper} or {@link Reducer} implementation being aware of the data partition
+ * it is currently working on.
+ * 
+ * @author noctarius
+ */
 public interface PartitionIdAware
 {
 
+    /**
+     * This method is called after deserializing but before executing {@link Mapper#map(Object, Object, Collector)} or
+     * {@link Reducer#reduce(Object, java.util.Iterator)}.
+     * 
+     * @param partitionId The current partitionId
+     */
     void setPartitionId( int partitionId );
 
 }

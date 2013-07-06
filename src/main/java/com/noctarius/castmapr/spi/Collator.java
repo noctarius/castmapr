@@ -16,9 +16,25 @@ package com.noctarius.castmapr.spi;
 
 import java.util.Map;
 
+/**
+ * This interface can be implemented to define a Collator which is executed after calculation of the MapReduce algorithm
+ * on remote cluster nodes but before returning the final result.<br>
+ * Collator can for example be used to sum up a final value.
+ * 
+ * @author noctarius
+ * @param <Key> The key type of the resulting keys
+ * @param <Value> The value type of the resulting values
+ * @param <R> The type for the collated result
+ */
 public interface Collator<Key, Value, R>
 {
 
+    /**
+     * This method is called with the mapped and possibly reduced values from the MapReduce algorithm.
+     * 
+     * @param reducedResults The mapped and possibly reduced intermediate results.
+     * @return The collated result.
+     */
     R collate( Map<Key, Value> reducedResults );
 
 }

@@ -14,6 +14,16 @@
 
 package com.noctarius.castmapr.spi;
 
+/**
+ * The {@link DistributableReducer} interface can be used to mark a {@link Reducer} as distributable.<br>
+ * Distributed {@link Reducer}s normally run multiple times on different hosts which for example is not a problem for
+ * sum-functions but can be a problem for other algorithms.<br>
+ * <b>Caution: {@link Reducer}s need to be marked as distributable in an explicit way!</b><br>
+ * An alternative to the usage of this interface is annotating the {@link Reducer} implementation using the
+ * {@link Distributable} annotation.
+ * 
+ * @author noctarius
+ */
 public interface DistributableReducer<Key, Value>
     extends Reducer<Key, Value>
 {
