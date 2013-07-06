@@ -11,6 +11,35 @@ CastMapR is a MapReduce implementation on top of Hazelcast 3. Currently it suppo
 
 The API of CastMapR is heavily inspired by the MapReduce implementation of Infinispan (thanks to the guys of RedHat!) and it is completely transparently usable for HazelcastClient connections.
 
+# Adding CastMapR to your project
+
+If you use Maven there are snapshots in Sonatype OSS Maven repositories (and later on in Maven Central as well). Just add the following lines to you pom.xml:
+```
+<dependencies>
+  <dependency>
+    <groupId>com.noctarius.castmapr</groupId>
+    <artifactId>castmapr</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+  </dependency>
+</dependencies>
+<repositories>
+  <repository>
+    <id>sonatype-nexus-public</id>
+    <name>SonaType public snapshots and releases repository</name>
+    <url>https://oss.sonatype.org/content/groups/public</url>
+    <releases>
+      <enabled>true</enabled>
+    </releases>
+    <snapshots>
+      <enabled>true</enabled>
+    </snapshots>
+  </repository>
+</repositories>
+```
+
+For non Maven users you can download the latest snapshot here:
+[Download](https://oss.sonatype.org/content/repositories/snapshots/com/noctarius/castmapr/castmapr/0.0.1-SNAPSHOT/)
+
 # Simple example
 
 ```java
