@@ -17,8 +17,9 @@
   <groupId>com.noctarius.castmapr</groupId>
   <artifactId>castmapr</artifactId>
   <version>0.0.1-SNAPSHOT</version>
-  <name>CastMapR</name>
   <description>MapReduce Implementation for Hazelcast 3</description>
+  <packaging>bundle</packaging>
+  <name>CastMapR</name>
 
   <distributionManagement>
     <snapshotRepository>
@@ -105,6 +106,32 @@
 
   <build>
     <plugins>
+      <plugin>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>maven-bundle-plugin</artifactId>
+        <extensions>true</extensions>
+        <configuration>
+          <instructions>
+            <Export-Package>
+              com.noctarius.castmapr.*
+            </Export-Package>
+            <Private-Package>
+              com.noctarius.castmapr.client.*,
+              com.noctarius.castmapr.core.*
+            </Private-Package>
+            <Import-Package>
+              com.hazelcast.client.*;resolution=Optional,
+              com.hazelcast.client.spi.*;resolution=Optional,
+              com.hazelcast.core.*,
+              com.hazelcast.util.*,
+              com.hazelcast.map.*,
+              com.hazelcast.spi.*,
+              com.hazelcast.nio.*,
+              com.hazelcast.instance.*
+            </Import-Package>
+          </instructions>
+        </configuration>
+      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
