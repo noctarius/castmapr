@@ -180,12 +180,16 @@
             </goals>
             <configuration>
               <show>public</show>
+              <sourceFileExcludes>
+                <exclude>com/noctarius/castmapr/client/*.java</exclude>
+                <exclude>com/noctarius/castmapr/core/*.java</exclude>
+                <exclude>com/noctarius/castmapr/core/operation/*.java</exclude>
+              </sourceFileExcludes>
               <sourceFileIncludes>
                 <include>com/noctarius/castmapr/spi/*.java</include>
                 <include>com/noctarius/castmapr/MapReduceTask.java</include>
                 <include>com/noctarius/castmapr/MapReduceTaskFactory.java</include>
               </sourceFileIncludes>
-              <excludePackageNames>com.noctarius.castmapr.client.*,com.noctarius.castmapr.core.*,com.noctarius.castmapr.core.operation.*</excludePackageNames>
             </configuration>
           </execution>
         </executions>
