@@ -21,6 +21,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ExecutorService;
 
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.HazelcastInstanceAware;
@@ -110,6 +111,21 @@ public abstract class AbstractMapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut>
     {
         MapReduceBackgroundTask<R> task = buildMapReduceBackgroundTask( collator, listener );
         invokeAsyncTask( task );
+    }
+
+    @Override
+    public void submitAsync( MapReduceListener<KeyIn, ValueIn> listener, ExecutorService executorService )
+    {
+        MapReduceBackgroundTask<?> task = buildMapReduceBackgroundTask( listener );
+        executorService.execute( task );
+    }
+
+    @Override
+    public <R> void submitAsync( Collator<KeyIn, ValueIn, R> collator, MapReduceCollatorListener<R> listener,
+                                 ExecutorService executorService )
+    {
+        MapReduceBackgroundTask<R> task = buildMapReduceBackgroundTask( collator, listener );
+        executorService.execute( task );
     }
 
     protected Map<KeyOut, ValueOut> finalReduceStep( Map<KeyOut, List<ValueOut>> groupedResponses )
