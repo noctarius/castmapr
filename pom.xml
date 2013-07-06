@@ -18,6 +18,8 @@
   <artifactId>castmapr</artifactId>
   <version>0.0.1-SNAPSHOT</version>
   <description>MapReduce Implementation for Hazelcast 3</description>
+  <inceptionYear>2013</inceptionYear>
+  <url>http://github.com/noctarius/castmapr</url>
   <packaging>bundle</packaging>
   <name>CastMapR</name>
 

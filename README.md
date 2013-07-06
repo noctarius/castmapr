@@ -40,6 +40,10 @@ If you use Maven there are snapshots in Sonatype OSS Maven repositories (and lat
 For non Maven users you can download the latest snapshot here:
 [Download](https://oss.sonatype.org/content/repositories/snapshots/com/noctarius/castmapr/castmapr/0.0.1-SNAPSHOT/)
 
+# Javadoc
+
+The Javadoc of the snapshot can be found [here](https://noctarius.ci.cloudbees.com/job/CastMapR/javadoc/).
+
 # Simple example
 
 ```java
