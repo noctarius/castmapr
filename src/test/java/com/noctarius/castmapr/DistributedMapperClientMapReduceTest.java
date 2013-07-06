@@ -19,6 +19,7 @@ import static org.junit.Assert.assertEquals;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Semaphore;
 
 import org.junit.After;
@@ -28,12 +29,13 @@ import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
 import com.hazelcast.client.HazelcastClient;
+import com.hazelcast.config.Config;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IMap;
 import com.hazelcast.test.HazelcastJUnit4ClassRunner;
-import com.hazelcast.test.HazelcastTestSupport;
 import com.hazelcast.test.annotation.SerialTest;
+import com.noctarius.castmapr.AbstractMapReduceTaskTest.CountingManagedContext;
 import com.noctarius.castmapr.spi.Collator;
 import com.noctarius.castmapr.spi.Collector;
 import com.noctarius.castmapr.spi.Distributable;
@@ -43,8 +45,9 @@ import com.noctarius.castmapr.spi.Reducer;
 
 @RunWith( HazelcastJUnit4ClassRunner.class )
 @Category( SerialTest.class )
+@SuppressWarnings( "unused" )
 public class DistributedMapperClientMapReduceTest
-    extends HazelcastTestSupport
+    extends AbstractMapReduceTaskTest
 {
 
     private static final String MAP_NAME = "default";
@@ -66,9 +69,12 @@ public class DistributedMapperClientMapReduceTest
     public void testMapperReducer()
         throws Exception
     {
-        HazelcastInstance h1 = Hazelcast.newHazelcastInstance();
-        HazelcastInstance h2 = Hazelcast.newHazelcastInstance();
-        HazelcastInstance h3 = Hazelcast.newHazelcastInstance();
+        Config config = buildConfig();
+        CountingManagedContext context = (CountingManagedContext) config.getManagedContext();
+
+        HazelcastInstance h1 = Hazelcast.newHazelcastInstance( config );
+        HazelcastInstance h2 = Hazelcast.newHazelcastInstance( config );
+        HazelcastInstance h3 = Hazelcast.newHazelcastInstance( config );
 
         HazelcastInstance client = HazelcastClient.newHazelcastClient( null );
         IMap<Integer, Integer> m1 = client.getMap( MAP_NAME );
@@ -79,7 +85,8 @@ public class DistributedMapperClientMapReduceTest
 
         MapReduceTaskFactory factory = MapReduceTaskFactory.newInstance( client );
         MapReduceTask<Integer, Integer, String, Integer> task = factory.build( m1 );
-        Map<String, Integer> result = task.mapper( new GroupingTestMapper() ).reducer( new TestReducer() ).submit();
+        Map<String, Integer> result =
+            task.mapper( new GroupingTestMapper() ).reducer( new TestReducer( client, context ) ).submit();
 
         // Precalculate results
         int[] expectedResults = new int[4];
@@ -93,15 +100,21 @@ public class DistributedMapperClientMapReduceTest
         {
             assertEquals( expectedResults[i], (int) result.get( String.valueOf( i ) ) );
         }
+
+        Set<String> hazelcastNames = context.getHazelcastNames();
+        assertEquals( 4, hazelcastNames.size() );
     }
 
     @Test( timeout = 20000 )
     public void testMapperReducerInterface()
         throws Exception
     {
-        HazelcastInstance h1 = Hazelcast.newHazelcastInstance();
-        HazelcastInstance h2 = Hazelcast.newHazelcastInstance();
-        HazelcastInstance h3 = Hazelcast.newHazelcastInstance();
+        Config config = buildConfig();
+        CountingManagedContext context = (CountingManagedContext) config.getManagedContext();
+
+        HazelcastInstance h1 = Hazelcast.newHazelcastInstance( config );
+        HazelcastInstance h2 = Hazelcast.newHazelcastInstance( config );
+        HazelcastInstance h3 = Hazelcast.newHazelcastInstance( config );
 
         HazelcastInstance client = HazelcastClient.newHazelcastClient( null );
         IMap<Integer, Integer> m1 = client.getMap( MAP_NAME );
@@ -112,7 +125,8 @@ public class DistributedMapperClientMapReduceTest
 
         MapReduceTaskFactory factory = MapReduceTaskFactory.newInstance( client );
         MapReduceTask<Integer, Integer, String, Integer> task = factory.build( m1 );
-        Map<String, Integer> result = task.mapper( new GroupingTestMapper() ).reducer( new TestReducer2() ).submit();
+        Map<String, Integer> result =
+            task.mapper( new GroupingTestMapper() ).reducer( new TestReducer2( client, context ) ).submit();
 
         // Precalculate results
         int[] expectedResults = new int[4];
@@ -126,15 +140,21 @@ public class DistributedMapperClientMapReduceTest
         {
             assertEquals( expectedResults[i], (int) result.get( String.valueOf( i ) ) );
         }
+
+        Set<String> hazelcastNames = context.getHazelcastNames();
+        assertEquals( 4, hazelcastNames.size() );
     }
 
     @Test( timeout = 20000 )
     public void testMapperReducerCollator()
         throws Exception
     {
-        HazelcastInstance h1 = Hazelcast.newHazelcastInstance();
-        HazelcastInstance h2 = Hazelcast.newHazelcastInstance();
-        HazelcastInstance h3 = Hazelcast.newHazelcastInstance();
+        Config config = buildConfig();
+        CountingManagedContext context = (CountingManagedContext) config.getManagedContext();
+
+        HazelcastInstance h1 = Hazelcast.newHazelcastInstance( config );
+        HazelcastInstance h2 = Hazelcast.newHazelcastInstance( config );
+        HazelcastInstance h3 = Hazelcast.newHazelcastInstance( config );
 
         HazelcastInstance client = HazelcastClient.newHazelcastClient( null );
         IMap<Integer, Integer> m1 = client.getMap( MAP_NAME );
@@ -145,7 +165,8 @@ public class DistributedMapperClientMapReduceTest
 
         MapReduceTaskFactory factory = MapReduceTaskFactory.newInstance( client );
         MapReduceTask<Integer, Integer, String, Integer> task = factory.build( m1 );
-        int result = task.mapper( new GroupingTestMapper() ).reducer( new TestReducer() ).submit( new TestCollator() );
+        int result =
+            task.mapper( new GroupingTestMapper() ).reducer( new TestReducer( client, context ) ).submit( new TestCollator() );
 
         // Precalculate result
         int expectedResult = 0;
@@ -158,15 +179,21 @@ public class DistributedMapperClientMapReduceTest
         {
             assertEquals( expectedResult, result );
         }
+
+        Set<String> hazelcastNames = context.getHazelcastNames();
+        assertEquals( 4, hazelcastNames.size() );
     }
 
     @Test( timeout = 20000 )
     public void testMapperReducerCollatorInterface()
         throws Exception
     {
-        HazelcastInstance h1 = Hazelcast.newHazelcastInstance();
-        HazelcastInstance h2 = Hazelcast.newHazelcastInstance();
-        HazelcastInstance h3 = Hazelcast.newHazelcastInstance();
+        Config config = buildConfig();
+        CountingManagedContext context = (CountingManagedContext) config.getManagedContext();
+
+        HazelcastInstance h1 = Hazelcast.newHazelcastInstance( config );
+        HazelcastInstance h2 = Hazelcast.newHazelcastInstance( config );
+        HazelcastInstance h3 = Hazelcast.newHazelcastInstance( config );
 
         HazelcastInstance client = HazelcastClient.newHazelcastClient( null );
         IMap<Integer, Integer> m1 = client.getMap( MAP_NAME );
@@ -177,7 +204,8 @@ public class DistributedMapperClientMapReduceTest
 
         MapReduceTaskFactory factory = MapReduceTaskFactory.newInstance( client );
         MapReduceTask<Integer, Integer, String, Integer> task = factory.build( m1 );
-        int result = task.mapper( new GroupingTestMapper() ).reducer( new TestReducer2() ).submit( new TestCollator() );
+        int result =
+            task.mapper( new GroupingTestMapper() ).reducer( new TestReducer2( client, context ) ).submit( new TestCollator() );
 
         // Precalculate result
         int expectedResult = 0;
@@ -190,15 +218,21 @@ public class DistributedMapperClientMapReduceTest
         {
             assertEquals( expectedResult, result );
         }
+
+        Set<String> hazelcastNames = context.getHazelcastNames();
+        assertEquals( 4, hazelcastNames.size() );
     }
 
     @Test( timeout = 20000 )
     public void testAsyncMapperReducer()
         throws Exception
     {
-        HazelcastInstance h1 = Hazelcast.newHazelcastInstance();
-        HazelcastInstance h2 = Hazelcast.newHazelcastInstance();
-        HazelcastInstance h3 = Hazelcast.newHazelcastInstance();
+        Config config = buildConfig();
+        CountingManagedContext context = (CountingManagedContext) config.getManagedContext();
+
+        HazelcastInstance h1 = Hazelcast.newHazelcastInstance( config );
+        HazelcastInstance h2 = Hazelcast.newHazelcastInstance( config );
+        HazelcastInstance h3 = Hazelcast.newHazelcastInstance( config );
 
         HazelcastInstance client = HazelcastClient.newHazelcastClient( null );
         IMap<Integer, Integer> m1 = client.getMap( MAP_NAME );
@@ -213,7 +247,7 @@ public class DistributedMapperClientMapReduceTest
 
         MapReduceTaskFactory factory = MapReduceTaskFactory.newInstance( client );
         MapReduceTask<Integer, Integer, String, Integer> task = factory.build( m1 );
-        task.mapper( new GroupingTestMapper() ).reducer( new TestReducer() ) //
+        task.mapper( new GroupingTestMapper() ).reducer( new TestReducer( client, context ) ) //
         .submitAsync( new MapReduceListener<String, Integer>()
         {
 
@@ -239,15 +273,21 @@ public class DistributedMapperClientMapReduceTest
         {
             assertEquals( expectedResults[i], (int) listenerResults.get( String.valueOf( i ) ) );
         }
+
+        Set<String> hazelcastNames = context.getHazelcastNames();
+        assertEquals( 4, hazelcastNames.size() );
     }
 
     @Test( timeout = 20000 )
     public void testAsyncMapperReducerInterface()
         throws Exception
     {
-        HazelcastInstance h1 = Hazelcast.newHazelcastInstance();
-        HazelcastInstance h2 = Hazelcast.newHazelcastInstance();
-        HazelcastInstance h3 = Hazelcast.newHazelcastInstance();
+        Config config = buildConfig();
+        CountingManagedContext context = (CountingManagedContext) config.getManagedContext();
+
+        HazelcastInstance h1 = Hazelcast.newHazelcastInstance( config );
+        HazelcastInstance h2 = Hazelcast.newHazelcastInstance( config );
+        HazelcastInstance h3 = Hazelcast.newHazelcastInstance( config );
 
         HazelcastInstance client = HazelcastClient.newHazelcastClient( null );
         IMap<Integer, Integer> m1 = client.getMap( MAP_NAME );
@@ -262,7 +302,7 @@ public class DistributedMapperClientMapReduceTest
 
         MapReduceTaskFactory factory = MapReduceTaskFactory.newInstance( client );
         MapReduceTask<Integer, Integer, String, Integer> task = factory.build( m1 );
-        task.mapper( new GroupingTestMapper() ).reducer( new TestReducer2() ) //
+        task.mapper( new GroupingTestMapper() ).reducer( new TestReducer2( client, context ) ) //
         .submitAsync( new MapReduceListener<String, Integer>()
         {
 
@@ -288,15 +328,21 @@ public class DistributedMapperClientMapReduceTest
         {
             assertEquals( expectedResults[i], (int) listenerResults.get( String.valueOf( i ) ) );
         }
+
+        Set<String> hazelcastNames = context.getHazelcastNames();
+        assertEquals( 4, hazelcastNames.size() );
     }
 
     @Test( timeout = 20000 )
     public void testAsyncMapperReducerCollator()
         throws Exception
     {
-        HazelcastInstance h1 = Hazelcast.newHazelcastInstance();
-        HazelcastInstance h2 = Hazelcast.newHazelcastInstance();
-        HazelcastInstance h3 = Hazelcast.newHazelcastInstance();
+        Config config = buildConfig();
+        CountingManagedContext context = (CountingManagedContext) config.getManagedContext();
+
+        HazelcastInstance h1 = Hazelcast.newHazelcastInstance( config );
+        HazelcastInstance h2 = Hazelcast.newHazelcastInstance( config );
+        HazelcastInstance h3 = Hazelcast.newHazelcastInstance( config );
 
         HazelcastInstance client = HazelcastClient.newHazelcastClient( null );
         IMap<Integer, Integer> m1 = client.getMap( MAP_NAME );
@@ -311,7 +357,7 @@ public class DistributedMapperClientMapReduceTest
 
         MapReduceTaskFactory factory = MapReduceTaskFactory.newInstance( client );
         MapReduceTask<Integer, Integer, String, Integer> task = factory.build( m1 );
-        task.mapper( new GroupingTestMapper() ).reducer( new TestReducer() )//
+        task.mapper( new GroupingTestMapper() ).reducer( new TestReducer( client, context ) )//
         .submitAsync( new TestCollator(), new MapReduceCollatorListener<Integer>()
         {
 
@@ -336,15 +382,21 @@ public class DistributedMapperClientMapReduceTest
         {
             assertEquals( expectedResult, result[0] );
         }
+
+        Set<String> hazelcastNames = context.getHazelcastNames();
+        assertEquals( 4, hazelcastNames.size() );
     }
 
     @Test( timeout = 20000 )
     public void testAsyncMapperReducerCollatorInterface()
         throws Exception
     {
-        HazelcastInstance h1 = Hazelcast.newHazelcastInstance();
-        HazelcastInstance h2 = Hazelcast.newHazelcastInstance();
-        HazelcastInstance h3 = Hazelcast.newHazelcastInstance();
+        Config config = buildConfig();
+        CountingManagedContext context = (CountingManagedContext) config.getManagedContext();
+
+        HazelcastInstance h1 = Hazelcast.newHazelcastInstance( config );
+        HazelcastInstance h2 = Hazelcast.newHazelcastInstance( config );
+        HazelcastInstance h3 = Hazelcast.newHazelcastInstance( config );
 
         HazelcastInstance client = HazelcastClient.newHazelcastClient( null );
         IMap<Integer, Integer> m1 = client.getMap( MAP_NAME );
@@ -359,7 +411,7 @@ public class DistributedMapperClientMapReduceTest
 
         MapReduceTaskFactory factory = MapReduceTaskFactory.newInstance( client );
         MapReduceTask<Integer, Integer, String, Integer> task = factory.build( m1 );
-        task.mapper( new GroupingTestMapper() ).reducer( new TestReducer2() )//
+        task.mapper( new GroupingTestMapper() ).reducer( new TestReducer2( client, context ) )//
         .submitAsync( new TestCollator(), new MapReduceCollatorListener<Integer>()
         {
 
@@ -384,8 +436,12 @@ public class DistributedMapperClientMapReduceTest
         {
             assertEquals( expectedResult, result[0] );
         }
+
+        Set<String> hazelcastNames = context.getHazelcastNames();
+        assertEquals( 4, hazelcastNames.size() );
     }
 
+    @SuppressWarnings( "serial" )
     public static class GroupingTestMapper
         extends Mapper<Integer, Integer, String, Integer>
     {
@@ -398,13 +454,29 @@ public class DistributedMapperClientMapReduceTest
     }
 
     @Distributable
+    @SuppressWarnings( "serial" )
     public static class TestReducer
-        implements Reducer<String, Integer>
+        implements Reducer<String, Integer>, CountingAware
     {
+
+        private transient HazelcastInstance hazelcastInstance;
+
+        private transient Set<String> hazelcastNames;
+
+        public TestReducer()
+        {
+        }
+
+        public TestReducer( HazelcastInstance hazelcastInstance, CountingManagedContext context )
+        {
+            this.hazelcastInstance = hazelcastInstance;
+            this.hazelcastNames = context.getHazelcastNames();
+        }
 
         @Override
         public Integer reduce( String key, Iterator<Integer> values )
         {
+            hazelcastNames.add( hazelcastInstance.getName() );
             int sum = 0;
             while ( values.hasNext() )
             {
@@ -412,21 +484,61 @@ public class DistributedMapperClientMapReduceTest
             }
             return sum;
         }
+
+        @Override
+        public void setHazelcastInstance( HazelcastInstance hazelcastInstance )
+        {
+            this.hazelcastInstance = hazelcastInstance;
+        }
+
+        @Override
+        public void setCouter( Set<String> hazelcastNames )
+        {
+            this.hazelcastNames = hazelcastNames;
+        }
     }
 
+    @SuppressWarnings( "serial" )
     public static class TestReducer2
-        implements DistributableReducer<String, Integer>
+        implements DistributableReducer<String, Integer>, CountingAware
     {
+
+        private transient HazelcastInstance hazelcastInstance;
+
+        private transient Set<String> hazelcastNames;
+
+        public TestReducer2()
+        {
+        }
+
+        public TestReducer2( HazelcastInstance hazelcastInstance, CountingManagedContext context )
+        {
+            this.hazelcastInstance = hazelcastInstance;
+            this.hazelcastNames = context.getHazelcastNames();
+        }
 
         @Override
         public Integer reduce( String key, Iterator<Integer> values )
         {
+            hazelcastNames.add( hazelcastInstance.getName() );
             int sum = 0;
             while ( values.hasNext() )
             {
                 sum += values.next();
             }
             return sum;
+        }
+
+        @Override
+        public void setHazelcastInstance( HazelcastInstance hazelcastInstance )
+        {
+            this.hazelcastInstance = hazelcastInstance;
+        }
+
+        @Override
+        public void setCouter( Set<String> hazelcastNames )
+        {
+            this.hazelcastNames = hazelcastNames;
         }
     }
 
