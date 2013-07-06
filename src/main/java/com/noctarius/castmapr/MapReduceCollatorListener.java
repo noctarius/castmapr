@@ -14,9 +14,27 @@
 
 package com.noctarius.castmapr;
 
+import com.noctarius.castmapr.spi.Collator;
+import com.noctarius.castmapr.spi.Mapper;
+import com.noctarius.castmapr.spi.Reducer;
+
+/**
+ * This listener is used for retrieving asynchronous results on {@link MapReduceTask} using {@link Mapper},
+ * {@link Reducer} <b>AND</b> {@link Collator}.<br>
+ * <b>Caution: Implementations need to be fully threadsafe!</b>
+ * 
+ * @author noctarius
+ * @param <Key> The type of keys
+ * @param <Value> The type of values
+ */
 public interface MapReduceCollatorListener<R>
 {
 
+    /**
+     * This method is called when a calculation of the {@link MapReduceTask} is finished.
+     * 
+     * @param reducedResults The mapped, reduced and collated result.
+     */
     void onCompletion( R result );
 
 }
