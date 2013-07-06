@@ -14,7 +14,7 @@ The API of CastMapR is heavily inspired by the MapReduce implementation of Infin
 # Adding CastMapR to your project
 
 If you use Maven there are snapshots in Sonatype OSS Maven repositories (and later on in Maven Central as well). Just add the following lines to you pom.xml:
-```
+```xml
 <dependencies>
   <dependency>
     <groupId>com.noctarius.castmapr</groupId>
