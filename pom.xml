@@ -18,7 +18,7 @@
   <artifactId>castmapr</artifactId>
   <version>0.0.1-SNAPSHOT</version>
   <name>CastMapR</name>
-  <description>Map&amp;Reduce Implementation for Hazelcast 3</description>
+  <description>MapReduce Implementation for Hazelcast 3</description>
 
   <distributionManagement>
     <snapshotRepository>
@@ -42,7 +42,7 @@
   <developers>
     <developer>
       <id>cengelbert</id>
-      <name>Christoph Engelbert</name>
+      <name>Christoph Engelbert (noctarius)</name>
       <email>noctarius@apache.org</email>
       <timezone>+1</timezone>
     </developer>
@@ -59,6 +59,11 @@
     <system>github</system>
     <url>https://github.com/noctarius/castmapr/issues</url>
   </issueManagement>
+
+  <ciManagement>
+    <system>Jenkins</system>
+    <url>https://noctarius.ci.cloudbees.com/job/CastMapR</url>
+  </ciManagement>
 
   <properties>
     <hazelcast.version>3.0-SNAPSHOT</hazelcast.version>
@@ -121,6 +126,30 @@
             </license>
           </licenses>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>attach-sources</id>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>attach-javadocs</id>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
