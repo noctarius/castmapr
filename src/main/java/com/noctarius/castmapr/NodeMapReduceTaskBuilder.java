@@ -16,14 +16,20 @@ package com.noctarius.castmapr;
 
 import java.lang.reflect.Method;
 
+import com.hazelcast.collection.list.ObjectListProxy;
+import com.hazelcast.collection.multimap.MultiMapProxySupport;
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.IList;
 import com.hazelcast.core.IMap;
+import com.hazelcast.core.MultiMap;
 import com.hazelcast.instance.HazelcastInstanceImpl;
 import com.hazelcast.instance.HazelcastInstanceProxy;
 import com.hazelcast.map.proxy.MapProxyImpl;
 import com.hazelcast.spi.NodeEngine;
 import com.hazelcast.util.ExceptionUtil;
-import com.noctarius.castmapr.core.NodeMapReduceTaskImpl;
+import com.noctarius.castmapr.core.IListNodeMapReduceTaskImpl;
+import com.noctarius.castmapr.core.IMapNodeMapReduceTaskImpl;
+import com.noctarius.castmapr.core.MultiMapNodeMapReduceTaskImpl;
 
 class NodeMapReduceTaskBuilder<KeyIn, ValueIn, KeyOut, ValueOut>
     implements MapReduceTaskBuilder<KeyIn, ValueIn, KeyOut, ValueOut>
@@ -68,16 +74,42 @@ class NodeMapReduceTaskBuilder<KeyIn, ValueIn, KeyOut, ValueOut>
     {
         try
         {
-            MapProxyImpl proxy = (MapProxyImpl) map;
+            MapProxyImpl<KeyIn, ValueIn> proxy = (MapProxyImpl<KeyIn, ValueIn>) map;
             NodeEngine nodeEngine = hazelcastInstance.node.nodeEngine;
-            return new NodeMapReduceTaskImpl<KeyIn, ValueIn, KeyOut, ValueOut>( proxy.getName(), nodeEngine,
-                                                                                hazelcastInstance );
+            return new IMapNodeMapReduceTaskImpl<KeyIn, ValueIn, KeyOut, ValueOut>( proxy.getName(), nodeEngine,
+                                                                                    hazelcastInstance );
         }
         catch ( Throwable t )
         {
             ExceptionUtil.rethrow( t );
         }
         return null;
+    }
+
+    @Override
+    public MapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut> build( MultiMap<KeyIn, ValueIn> multiMap )
+    {
+        try
+        {
+            MultiMapProxySupport proxy = (MultiMapProxySupport) multiMap;
+            NodeEngine nodeEngine = hazelcastInstance.node.nodeEngine;
+            return new MultiMapNodeMapReduceTaskImpl<KeyIn, ValueIn, KeyOut, ValueOut>( proxy.getName(), nodeEngine,
+                                                                                        hazelcastInstance );
+        }
+        catch ( Throwable t )
+        {
+            ExceptionUtil.rethrow( t );
+        }
+        return null;
+    }
+
+    @Override
+    public MapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut> build( IList<ValueIn> list )
+    {
+        ObjectListProxy<ValueIn> proxy = (ObjectListProxy<ValueIn>) list;
+        NodeEngine nodeEngine = hazelcastInstance.node.nodeEngine;
+        return new IListNodeMapReduceTaskImpl<KeyIn, ValueIn, KeyOut, ValueOut>( proxy.getName(), nodeEngine,
+                                                                                 hazelcastInstance );
     }
 
 }

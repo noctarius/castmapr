@@ -12,73 +12,79 @@
  * limitations under the License.
  */
 
-package com.noctarius.castmapr.client;
+package com.noctarius.castmapr.core;
 
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 
-import com.hazelcast.client.spi.ClientContext;
-import com.hazelcast.client.spi.ClientExecutionService;
-import com.hazelcast.client.spi.ClientInvocationService;
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.map.MapService;
+import com.hazelcast.spi.NodeEngine;
+import com.hazelcast.spi.OperationService;
+import com.hazelcast.spi.impl.BinaryOperationFactory;
 import com.hazelcast.util.ExceptionUtil;
-import com.noctarius.castmapr.core.AbstractMapReduceTask;
+import com.noctarius.castmapr.core.operation.IMapMapReduceOperation;
 import com.noctarius.castmapr.spi.Collator;
 import com.noctarius.castmapr.spi.MapReduceCollatorListener;
 import com.noctarius.castmapr.spi.MapReduceListener;
+import com.noctarius.castmapr.spi.Reducer;
 
-public class ClientMapReduceTaskProxy<KeyIn, ValueIn, KeyOut, ValueOut>
+public class IMapNodeMapReduceTaskImpl<KeyIn, ValueIn, KeyOut, ValueOut>
     extends AbstractMapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut>
 {
 
-    private final ClientContext context;
+    private final NodeEngine nodeEngine;
 
-    public ClientMapReduceTaskProxy( String name, ClientContext context, HazelcastInstance hazelcastInstance )
+    public IMapNodeMapReduceTaskImpl( String name, NodeEngine nodeEngine, HazelcastInstance hazelcastInstance )
     {
         super( name, hazelcastInstance );
-        this.context = context;
+        this.nodeEngine = nodeEngine;
     }
 
     @Override
     protected Map<Integer, Object> invokeTasks( boolean distributableReducer )
         throws Exception
     {
-        ClientInvocationService cis = context.getInvocationService();
-        MapReduceRequest<KeyIn, ValueIn, KeyOut, ValueOut> request;
-        request = new MapReduceRequest<KeyIn, ValueIn, KeyOut, ValueOut>( name, mapper, reducer, distributableReducer );
-        return cis.invokeOnRandomTarget( request );
+        OperationService os = nodeEngine.getOperationService();
+
+        Reducer r = distributableReducer ? reducer : null;
+        IMapMapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut> operation;
+        operation = new IMapMapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>( name, mapper, r );
+        operation.setNodeEngine( nodeEngine ).setCallerUuid( nodeEngine.getLocalMember().getUuid() );
+        return os.invokeOnAllPartitions( MapService.SERVICE_NAME, new BinaryOperationFactory( operation, nodeEngine ) );
     }
 
     @Override
     protected <R> MapReduceBackgroundTask<R> buildMapReduceBackgroundTask( MapReduceListener<KeyIn, ValueIn> listener )
     {
-        return new ClientMapReduceBackgroundTask( listener );
+        return new NodeMapReduceBackgroundTask( listener );
     }
 
     @Override
     protected <R> MapReduceBackgroundTask<R> buildMapReduceBackgroundTask( Collator<KeyIn, ValueIn, R> collator,
                                                                            MapReduceCollatorListener<R> collatorListener )
     {
-        return new ClientMapReduceBackgroundTask( collator, collatorListener );
+        return new NodeMapReduceBackgroundTask<R>( collator, collatorListener );
     }
 
     @Override
     protected <R> void invokeAsyncTask( MapReduceBackgroundTask<R> task )
     {
-        ClientExecutionService es = context.getExecutionService();
+        ExecutorService es = nodeEngine.getExecutionService().getExecutor( "hz:query" );
         es.execute( task );
     }
 
-    private class ClientMapReduceBackgroundTask<R>
+    private class NodeMapReduceBackgroundTask<R>
         extends MapReduceBackgroundTask<R>
     {
 
-        private ClientMapReduceBackgroundTask( MapReduceListener<KeyIn, ValueIn> listener )
+        private NodeMapReduceBackgroundTask( MapReduceListener<KeyIn, ValueIn> listener )
         {
             super( listener );
         }
 
-        private ClientMapReduceBackgroundTask( Collator<KeyIn, ValueIn, R> collator,
-                                               MapReduceCollatorListener<R> collatorListener )
+        private NodeMapReduceBackgroundTask( Collator<KeyIn, ValueIn, R> collator,
+                                             MapReduceCollatorListener<R> collatorListener )
         {
             super( collator, collatorListener );
         }
@@ -86,12 +92,16 @@ public class ClientMapReduceTaskProxy<KeyIn, ValueIn, KeyOut, ValueOut>
         @Override
         public void run()
         {
-            ClientInvocationService cis = context.getInvocationService();
+            OperationService os = nodeEngine.getOperationService();
+            Reducer r = isDistributableReducer() ? reducer : null;
+            IMapMapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut> operation;
+            operation = new IMapMapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>( name, mapper, r );
+            operation.setNodeEngine( nodeEngine ).setCallerUuid( nodeEngine.getLocalMember().getUuid() );
             try
             {
-                MapReduceRequest<KeyIn, ValueIn, KeyOut, ValueOut> request;
-                request = new MapReduceRequest( name, mapper, reducer, isDistributableReducer() );
-                Map<Integer, Object> responses = cis.invokeOnRandomTarget( request );
+                Map<Integer, Object> responses =
+                    os.invokeOnAllPartitions( MapService.SERVICE_NAME, new BinaryOperationFactory( operation,
+                                                                                                   nodeEngine ) );
                 Map groupedResponses = groupResponsesByKey( responses );
                 Map reducedResults = finalReduceStep( groupedResponses );
                 if ( collator == null )
@@ -110,4 +120,5 @@ public class ClientMapReduceTaskProxy<KeyIn, ValueIn, KeyOut, ValueOut>
             }
         }
     }
+
 }

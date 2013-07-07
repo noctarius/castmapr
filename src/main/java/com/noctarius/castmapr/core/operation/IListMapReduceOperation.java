@@ -15,28 +15,35 @@
 package com.noctarius.castmapr.core.operation;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.hazelcast.core.IMap;
-import com.hazelcast.map.MapService;
-import com.hazelcast.map.RecordStore;
-import com.hazelcast.map.operation.AbstractMapOperation;
+import com.hazelcast.collection.CollectionContainer;
+import com.hazelcast.collection.CollectionProxyId;
+import com.hazelcast.collection.CollectionProxyType;
+import com.hazelcast.collection.CollectionRecord;
+import com.hazelcast.collection.CollectionService;
+import com.hazelcast.collection.CollectionWrapper;
+import com.hazelcast.collection.list.ObjectListProxy;
+import com.hazelcast.core.IList;
 import com.hazelcast.nio.ObjectDataInput;
 import com.hazelcast.nio.ObjectDataOutput;
 import com.hazelcast.nio.serialization.Data;
 import com.hazelcast.spi.PartitionAwareOperation;
 import com.hazelcast.spi.ProxyService;
+import com.hazelcast.spi.impl.AbstractNamedOperation;
+import com.hazelcast.spi.impl.NodeEngineImpl;
 import com.noctarius.castmapr.core.CollectorImpl;
-import com.noctarius.castmapr.spi.MapAware;
+import com.noctarius.castmapr.spi.IListAware;
 import com.noctarius.castmapr.spi.Mapper;
 import com.noctarius.castmapr.spi.PartitionIdAware;
 import com.noctarius.castmapr.spi.Reducer;
 
-public class MapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>
-    extends AbstractMapOperation
+public class IListMapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>
+    extends AbstractNamedOperation
     implements PartitionAwareOperation
 {
 
@@ -46,12 +53,12 @@ public class MapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>
 
     private transient Object response;
 
-    public MapReduceOperation()
+    public IListMapReduceOperation()
     {
     }
 
-    public MapReduceOperation( String name, Mapper<KeyIn, ValueIn, KeyOut, ValueOut> mapper,
-                               Reducer<KeyOut, ValueOut> reducer )
+    public IListMapReduceOperation( String name, Mapper<KeyIn, ValueIn, KeyOut, ValueOut> mapper,
+                                    Reducer<KeyOut, ValueOut> reducer )
     {
         super( name );
         this.mapper = mapper;
@@ -62,27 +69,33 @@ public class MapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>
     public void run()
         throws Exception
     {
-        int partitionId = getPartitionId();
+        CollectionService service = ( (NodeEngineImpl) getNodeEngine() ).getService( CollectionService.SERVICE_NAME );
+        CollectionContainer container = getCollectionContainer( service );
+
         ProxyService proxyService = getNodeEngine().getProxyService();
+        IList<ValueIn> list = getList( proxyService );
+
+        int partitionId = getPartitionId();
         if ( mapper instanceof PartitionIdAware )
         {
             ( (PartitionIdAware) mapper ).setPartitionId( partitionId );
         }
-        if ( mapper instanceof MapAware )
+        if ( mapper instanceof IListAware )
         {
-            IMap map = (IMap) proxyService.getDistributedObject( MapService.SERVICE_NAME, name );
-            ( (MapAware) mapper ).setMap( map );
+            ( (IListAware) mapper ).setMultiMap( list );
         }
 
+        Data dataKey = getNodeEngine().toData( name );
+        CollectionWrapper collectionWrapper = container.getOrCreateCollectionWrapper( dataKey );
+        Collection<CollectionRecord> collection = collectionWrapper.getCollection();
+
         CollectorImpl<KeyOut, ValueOut> collector = new CollectorImpl<KeyOut, ValueOut>();
-        RecordStore recordStore = mapService.getRecordStore( partitionId, name );
 
         mapper.initialize( collector );
-        for ( Entry<Data, Data> entry : recordStore.entrySetData() )
+        for ( CollectionRecord record : collection )
         {
-            KeyIn key = (KeyIn) mapService.toObject( entry.getKey() );
-            ValueIn value = (ValueIn) mapService.toObject( entry.getValue() );
-            mapper.map( key, value, collector );
+            ValueIn value = (ValueIn) getNodeEngine().toObject( record.getObject() );
+            mapper.map( null, value, collector );
         }
         mapper.finalized( collector );
 
@@ -92,10 +105,9 @@ public class MapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>
             {
                 ( (PartitionIdAware) reducer ).setPartitionId( partitionId );
             }
-            if ( reducer instanceof MapAware )
+            if ( reducer instanceof IListAware )
             {
-                IMap map = (IMap) proxyService.getDistributedObject( MapService.SERVICE_NAME, name );
-                ( (MapAware) reducer ).setMap( map );
+                ( (IListAware) reducer ).setMultiMap( list );
             }
             Map<KeyOut, ValueOut> reducedResults = new HashMap<KeyOut, ValueOut>( collector.emitted.keySet().size() );
             for ( Entry<KeyOut, List<ValueOut>> entry : collector.emitted.entrySet() )
@@ -108,6 +120,12 @@ public class MapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>
         {
             response = collector.emitted;
         }
+    }
+
+    @Override
+    public boolean returnsResponse()
+    {
+        return true;
     }
 
     @Override
@@ -134,4 +152,17 @@ public class MapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>
         reducer = in.readObject();
     }
 
+    private IList<ValueIn> getList( ProxyService proxyService )
+    {
+        CollectionProxyId proxyId =
+            new CollectionProxyId( ObjectListProxy.COLLECTION_LIST_NAME, name, CollectionProxyType.LIST );
+        return (IList<ValueIn>) proxyService.getDistributedObject( CollectionService.SERVICE_NAME, proxyId );
+    }
+
+    private CollectionContainer getCollectionContainer( CollectionService collectionService )
+    {
+        CollectionProxyId proxyId =
+            new CollectionProxyId( ObjectListProxy.COLLECTION_LIST_NAME, name, CollectionProxyType.LIST );
+        return collectionService.getOrCreateCollectionContainer( getPartitionId(), proxyId );
+    }
 }

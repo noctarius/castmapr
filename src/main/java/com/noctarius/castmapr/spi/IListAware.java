@@ -14,25 +14,25 @@
 
 package com.noctarius.castmapr.spi;
 
-import com.hazelcast.core.IMap;
+import com.hazelcast.core.IList;
 
 /**
- * This interface can be used to mark {@link Mapper} or {@link Reducer} implementation being aware of the {@link IMap}
+ * This interface can be used to mark {@link Mapper} or {@link Reducer} implementation being aware of the {@link IList}
  * they are being executed aginst.
  * 
  * @author noctarius
  * @param <Key> The key type
  * @param <Value> The value
  */
-public interface MapAware<Key, Value>
+public interface IListAware<Value>
 {
 
     /**
      * This method is called after deserializing but before executing {@link Mapper#map(Object, Object, Collector)} or
      * {@link Reducer#reduce(Object, java.util.Iterator)}.
      * 
-     * @param map The map the implementing instance is executed against.
+     * @param list The list the implementing instance is executed against.
      */
-    void setMap( IMap<Key, Value> map );
+    void setMultiMap( IList<Value> list );
 
 }

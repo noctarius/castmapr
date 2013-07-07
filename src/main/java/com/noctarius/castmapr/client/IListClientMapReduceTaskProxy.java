@@ -12,79 +12,76 @@
  * limitations under the License.
  */
 
-package com.noctarius.castmapr.core;
+package com.noctarius.castmapr.client;
 
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
 
+import com.hazelcast.client.spi.ClientContext;
+import com.hazelcast.client.spi.ClientExecutionService;
+import com.hazelcast.client.spi.ClientInvocationService;
 import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.MapService;
-import com.hazelcast.spi.NodeEngine;
-import com.hazelcast.spi.OperationService;
-import com.hazelcast.spi.impl.BinaryOperationFactory;
 import com.hazelcast.util.ExceptionUtil;
-import com.noctarius.castmapr.core.operation.MapReduceOperation;
+import com.noctarius.castmapr.core.AbstractMapReduceTask;
 import com.noctarius.castmapr.spi.Collator;
 import com.noctarius.castmapr.spi.MapReduceCollatorListener;
 import com.noctarius.castmapr.spi.MapReduceListener;
-import com.noctarius.castmapr.spi.Reducer;
 
-public class NodeMapReduceTaskImpl<KeyIn, ValueIn, KeyOut, ValueOut>
+public class IListClientMapReduceTaskProxy<KeyIn, ValueIn, KeyOut, ValueOut>
     extends AbstractMapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut>
 {
 
-    private final NodeEngine nodeEngine;
+    private final ClientContext context;
 
-    public NodeMapReduceTaskImpl( String name, NodeEngine nodeEngine, HazelcastInstance hazelcastInstance )
+    public IListClientMapReduceTaskProxy( String name, ClientContext context, HazelcastInstance hazelcastInstance )
     {
         super( name, hazelcastInstance );
-        this.nodeEngine = nodeEngine;
+        this.context = context;
     }
 
     @Override
     protected Map<Integer, Object> invokeTasks( boolean distributableReducer )
         throws Exception
     {
-        OperationService os = nodeEngine.getOperationService();
-
-        Reducer r = distributableReducer ? reducer : null;
-        MapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut> operation;
-        operation = new MapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>( name, mapper, r );
-        operation.setNodeEngine( nodeEngine ).setCallerUuid( nodeEngine.getLocalMember().getUuid() );
-        return os.invokeOnAllPartitions( MapService.SERVICE_NAME, new BinaryOperationFactory( operation, nodeEngine ) );
+        ClientInvocationService cis = context.getInvocationService();
+        MapReduceRequest<KeyIn, ValueIn, KeyOut, ValueOut> request;
+        request =
+            new MapReduceRequest<KeyIn, ValueIn, KeyOut, ValueOut>( name, mapper, reducer,
+                                                                    ClientMapReduceCollectionType.IList,
+                                                                    distributableReducer );
+        return cis.invokeOnRandomTarget( request );
     }
 
     @Override
     protected <R> MapReduceBackgroundTask<R> buildMapReduceBackgroundTask( MapReduceListener<KeyIn, ValueIn> listener )
     {
-        return new NodeMapReduceBackgroundTask( listener );
+        return new ClientMapReduceBackgroundTask( listener );
     }
 
     @Override
     protected <R> MapReduceBackgroundTask<R> buildMapReduceBackgroundTask( Collator<KeyIn, ValueIn, R> collator,
                                                                            MapReduceCollatorListener<R> collatorListener )
     {
-        return new NodeMapReduceBackgroundTask<R>( collator, collatorListener );
+        return new ClientMapReduceBackgroundTask( collator, collatorListener );
     }
 
     @Override
     protected <R> void invokeAsyncTask( MapReduceBackgroundTask<R> task )
     {
-        ExecutorService es = nodeEngine.getExecutionService().getExecutor( "hz:query" );
+        ClientExecutionService es = context.getExecutionService();
         es.execute( task );
     }
 
-    private class NodeMapReduceBackgroundTask<R>
+    private class ClientMapReduceBackgroundTask<R>
         extends MapReduceBackgroundTask<R>
     {
 
-        private NodeMapReduceBackgroundTask( MapReduceListener<KeyIn, ValueIn> listener )
+        private ClientMapReduceBackgroundTask( MapReduceListener<KeyIn, ValueIn> listener )
         {
             super( listener );
         }
 
-        private NodeMapReduceBackgroundTask( Collator<KeyIn, ValueIn, R> collator,
-                                             MapReduceCollatorListener<R> collatorListener )
+        private ClientMapReduceBackgroundTask( Collator<KeyIn, ValueIn, R> collator,
+                                               MapReduceCollatorListener<R> collatorListener )
         {
             super( collator, collatorListener );
         }
@@ -92,16 +89,14 @@ public class NodeMapReduceTaskImpl<KeyIn, ValueIn, KeyOut, ValueOut>
         @Override
         public void run()
         {
-            OperationService os = nodeEngine.getOperationService();
-            Reducer r = isDistributableReducer() ? reducer : null;
-            MapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut> operation;
-            operation = new MapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>( name, mapper, r );
-            operation.setNodeEngine( nodeEngine ).setCallerUuid( nodeEngine.getLocalMember().getUuid() );
+            ClientInvocationService cis = context.getInvocationService();
             try
             {
-                Map<Integer, Object> responses =
-                    os.invokeOnAllPartitions( MapService.SERVICE_NAME, new BinaryOperationFactory( operation,
-                                                                                                   nodeEngine ) );
+                MapReduceRequest<KeyIn, ValueIn, KeyOut, ValueOut> request;
+                request =
+                    new MapReduceRequest( name, mapper, reducer, ClientMapReduceCollectionType.IList,
+                                          isDistributableReducer() );
+                Map<Integer, Object> responses = cis.invokeOnRandomTarget( request );
                 Map groupedResponses = groupResponsesByKey( responses );
                 Map reducedResults = finalReduceStep( groupedResponses );
                 if ( collator == null )
@@ -120,5 +115,4 @@ public class NodeMapReduceTaskImpl<KeyIn, ValueIn, KeyOut, ValueOut>
             }
         }
     }
-
 }

@@ -23,7 +23,7 @@ import com.hazelcast.spi.OperationFactory;
 import com.noctarius.castmapr.spi.Mapper;
 import com.noctarius.castmapr.spi.Reducer;
 
-public class MapReduceOperationFactory<KeyIn, ValueIn, KeyOut, ValueOut>
+public class MultiMapMapReduceOperationFactory<KeyIn, ValueIn, KeyOut, ValueOut>
     implements OperationFactory
 {
 
@@ -35,11 +35,11 @@ public class MapReduceOperationFactory<KeyIn, ValueIn, KeyOut, ValueOut>
 
     private String name;
 
-    public MapReduceOperationFactory()
+    public MultiMapMapReduceOperationFactory()
     {
     }
 
-    public MapReduceOperationFactory( String name, Mapper<KeyIn, ValueIn, KeyOut, ValueOut> mapper,
+    public MultiMapMapReduceOperationFactory( String name, Mapper<KeyIn, ValueIn, KeyOut, ValueOut> mapper,
                                       Reducer<KeyOut, ValueOut> reducer, boolean distributableReducer )
     {
         this.name = name;
@@ -72,7 +72,7 @@ public class MapReduceOperationFactory<KeyIn, ValueIn, KeyOut, ValueOut>
     public Operation createOperation()
     {
         Reducer r = distributableReducer ? reducer : null;
-        return new MapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>( name, mapper, r );
+        return new MultiMapMapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>( name, mapper, r );
     }
 
 }

@@ -19,7 +19,9 @@ import java.lang.reflect.Constructor;
 import com.hazelcast.client.HazelcastClient;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.IList;
 import com.hazelcast.core.IMap;
+import com.hazelcast.core.MultiMap;
 import com.hazelcast.util.ExceptionUtil;
 
 /**
@@ -127,6 +129,16 @@ public class MapReduceTaskFactory
     public <KeyIn, ValueIn, KeyOut, ValueOut> MapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut> build( IMap<KeyIn, ValueIn> map )
     {
         return mapReduceTaskBuilder.build( map );
+    }
+
+    public <KeyIn, ValueIn, KeyOut, ValueOut> MapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut> build( MultiMap<KeyIn, ValueIn> multiMap )
+    {
+        return mapReduceTaskBuilder.build( multiMap );
+    }
+
+    public <KeyIn, ValueIn, KeyOut, ValueOut> MapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut> build( IList<ValueIn> list )
+    {
+        return mapReduceTaskBuilder.build( list );
     }
 
 }

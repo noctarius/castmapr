@@ -36,6 +36,8 @@ import com.hazelcast.core.IMap;
 import com.hazelcast.test.HazelcastJUnit4ClassRunner;
 import com.hazelcast.test.TestHazelcastInstanceFactory;
 import com.hazelcast.test.annotation.SerialTest;
+import com.noctarius.castmapr.MapReduceTask;
+import com.noctarius.castmapr.MapReduceTaskFactory;
 import com.noctarius.castmapr.spi.Collator;
 import com.noctarius.castmapr.spi.Collector;
 import com.noctarius.castmapr.spi.MapReduceCollatorListener;

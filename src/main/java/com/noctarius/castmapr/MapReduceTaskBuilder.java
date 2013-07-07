@@ -14,11 +14,17 @@
 
 package com.noctarius.castmapr;
 
+import com.hazelcast.core.IList;
 import com.hazelcast.core.IMap;
+import com.hazelcast.core.MultiMap;
 
 interface MapReduceTaskBuilder<KeyIn, ValueIn, KeyOut, ValueOut>
 {
 
     MapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut> build( IMap<KeyIn, ValueIn> map );
+
+    MapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut> build( MultiMap<KeyIn, ValueIn> multiMap );
+
+    MapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut> build( IList<ValueIn> list );
 
 }

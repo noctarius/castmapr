@@ -24,7 +24,9 @@ import com.hazelcast.nio.ObjectDataInput;
 import com.hazelcast.nio.ObjectDataOutput;
 import com.hazelcast.nio.serialization.DataSerializable;
 import com.hazelcast.spi.OperationFactory;
-import com.noctarius.castmapr.core.operation.MapReduceOperationFactory;
+import com.noctarius.castmapr.core.operation.IListMapReduceOperationFactory;
+import com.noctarius.castmapr.core.operation.IMapMapReduceOperationFactory;
+import com.noctarius.castmapr.core.operation.MultiMapMapReduceOperationFactory;
 import com.noctarius.castmapr.spi.Mapper;
 import com.noctarius.castmapr.spi.Reducer;
 
@@ -32,6 +34,8 @@ public class MapReduceRequest<KeyIn, ValueIn, KeyOut, ValueOut>
     extends AllPartitionsClientRequest
     implements DataSerializable, RetryableRequest
 {
+
+    private ClientMapReduceCollectionType collectionType;
 
     private Mapper<KeyIn, ValueIn, KeyOut, ValueOut> mapper;
 
@@ -46,11 +50,13 @@ public class MapReduceRequest<KeyIn, ValueIn, KeyOut, ValueOut>
     }
 
     public MapReduceRequest( String name, Mapper<KeyIn, ValueIn, KeyOut, ValueOut> mapper,
-                             Reducer<KeyOut, ValueOut> reducer, boolean distributableReducer )
+                             Reducer<KeyOut, ValueOut> reducer, ClientMapReduceCollectionType collectionType,
+                             boolean distributableReducer )
     {
         this.name = name;
         this.mapper = mapper;
         this.reducer = reducer;
+        this.collectionType = collectionType;
         this.distributableReducer = distributableReducer;
     }
 
@@ -61,6 +67,7 @@ public class MapReduceRequest<KeyIn, ValueIn, KeyOut, ValueOut>
         out.writeUTF( name );
         out.writeObject( mapper );
         out.writeObject( reducer );
+        out.writeByte( collectionType.ordinal() );
         out.writeBoolean( distributableReducer );
     }
 
@@ -71,14 +78,27 @@ public class MapReduceRequest<KeyIn, ValueIn, KeyOut, ValueOut>
         name = in.readUTF();
         mapper = in.readObject();
         reducer = in.readObject();
+        collectionType = ClientMapReduceCollectionType.byOrdinal( in.readByte() );
         distributableReducer = in.readBoolean();
     }
 
     @Override
     protected OperationFactory createOperationFactory()
     {
-        return new MapReduceOperationFactory<KeyIn, ValueIn, KeyOut, ValueOut>( name, mapper, reducer,
-                                                                                distributableReducer );
+        switch ( collectionType )
+        {
+            case IMap:
+                return new IMapMapReduceOperationFactory<KeyIn, ValueIn, KeyOut, ValueOut>( name, mapper, reducer,
+                                                                                            distributableReducer );
+            case MultiMap:
+                return new MultiMapMapReduceOperationFactory<KeyIn, ValueIn, KeyOut, ValueOut>( name, mapper, reducer,
+                                                                                                distributableReducer );
+            case IList:
+                return new IListMapReduceOperationFactory<KeyIn, ValueIn, KeyOut, ValueOut>( name, mapper, reducer,
+                                                                                             distributableReducer );
+            default:
+                throw new IllegalStateException( "Illegal ClientMapReduceCollectionType was found" );
+        }
     }
 
     @Override

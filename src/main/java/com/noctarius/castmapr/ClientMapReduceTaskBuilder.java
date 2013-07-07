@@ -16,13 +16,19 @@ package com.noctarius.castmapr;
 
 import java.lang.reflect.Method;
 
+import com.hazelcast.client.proxy.ClientListProxy;
 import com.hazelcast.client.proxy.ClientMapProxy;
+import com.hazelcast.client.proxy.ClientMultiMapProxy;
 import com.hazelcast.client.spi.ClientContext;
 import com.hazelcast.client.spi.ClientProxy;
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.IList;
 import com.hazelcast.core.IMap;
+import com.hazelcast.core.MultiMap;
 import com.hazelcast.util.ExceptionUtil;
-import com.noctarius.castmapr.client.ClientMapReduceTaskProxy;
+import com.noctarius.castmapr.client.IListClientMapReduceTaskProxy;
+import com.noctarius.castmapr.client.IMapClientMapReduceTaskProxy;
+import com.noctarius.castmapr.client.MultiMapClientMapReduceTaskProxy;
 
 class ClientMapReduceTaskBuilder<KeyIn, ValueIn, KeyOut, ValueOut>
     implements MapReduceTaskBuilder<KeyIn, ValueIn, KeyOut, ValueOut>
@@ -59,8 +65,42 @@ class ClientMapReduceTaskBuilder<KeyIn, ValueIn, KeyOut, ValueOut>
         {
             ClientMapProxy<KeyIn, ValueIn> proxy = (ClientMapProxy<KeyIn, ValueIn>) map;
             ClientContext context = (ClientContext) GET_CLIENTCONTEXT_METHOD.invoke( proxy );
-            return new ClientMapReduceTaskProxy<KeyIn, ValueIn, KeyOut, ValueOut>( proxy.getName(), context,
-                                                                                   hazelcastInstance );
+            return new IMapClientMapReduceTaskProxy<KeyIn, ValueIn, KeyOut, ValueOut>( proxy.getName(), context,
+                                                                                       hazelcastInstance );
+        }
+        catch ( Throwable t )
+        {
+            ExceptionUtil.rethrow( t );
+        }
+        return null;
+    }
+
+    @Override
+    public MapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut> build( MultiMap<KeyIn, ValueIn> multiMap )
+    {
+        try
+        {
+            ClientMultiMapProxy<KeyIn, ValueIn> proxy = (ClientMultiMapProxy<KeyIn, ValueIn>) multiMap;
+            ClientContext context = (ClientContext) GET_CLIENTCONTEXT_METHOD.invoke( proxy );
+            return new MultiMapClientMapReduceTaskProxy<KeyIn, ValueIn, KeyOut, ValueOut>( proxy.getName(), context,
+                                                                                           hazelcastInstance );
+        }
+        catch ( Throwable t )
+        {
+            ExceptionUtil.rethrow( t );
+        }
+        return null;
+    }
+
+    @Override
+    public MapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut> build( IList<ValueIn> list )
+    {
+        try
+        {
+            ClientListProxy<ValueIn> proxy = (ClientListProxy<ValueIn>) list;
+            ClientContext context = (ClientContext) GET_CLIENTCONTEXT_METHOD.invoke( proxy );
+            return new IListClientMapReduceTaskProxy<KeyIn, ValueIn, KeyOut, ValueOut>( proxy.getName(), context,
+                                                                                        hazelcastInstance );
         }
         catch ( Throwable t )
         {
