@@ -111,6 +111,7 @@
       <plugin>
         <groupId>org.apache.felix</groupId>
         <artifactId>maven-bundle-plugin</artifactId>
+        <version>2.3.6</version>
         <extensions>true</extensions>
         <configuration>
           <instructions>
@@ -127,6 +128,9 @@
               com.hazelcast.core.*,
               com.hazelcast.util.*,
               com.hazelcast.map.*,
+              com.hazelcast.collection.*,
+              com.hazelcast.list.*,
+              com.hazelcast.multimap.*,
               com.hazelcast.spi.*,
               com.hazelcast.nio.*,
               com.hazelcast.instance.*
@@ -197,6 +201,28 @@
       </plugin>
     </plugins>
   </build>
+  <reporting>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <configuration>
+          <show>public</show>
+          <sourceFileExcludes>
+            <exclude>com/noctarius/castmapr/client/*.java</exclude>
+            <exclude>com/noctarius/castmapr/core/*.java</exclude>
+            <exclude>com/noctarius/castmapr/core/operation/*.java</exclude>
+          </sourceFileExcludes>
+          <sourceFileIncludes>
+            <include>com/noctarius/castmapr/spi/*.java</include>
+            <include>com/noctarius/castmapr/MapReduceTask.java</include>
+            <include>com/noctarius/castmapr/MapReduceTaskFactory.java</include>
+          </sourceFileIncludes>
+          <excludePackageNames>*.core.*:*.core.operation.*:*.client.*</excludePackageNames>
+        </configuration>
+      </plugin>
+    </plugins>
+  </reporting>
 
   <repositories>
     <repository>
