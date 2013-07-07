@@ -5,11 +5,22 @@ CastMapR - MapReduce for Hazelcast
 
 # What is CastMapR
 
-CastMapR is a MapReduce implementation on top of Hazelcast 3. Currently it supports MapReduce algorithms on IMap but other Collection implementation like Multimap, IList, ISet are planned.
+CastMapR is a MapReduce implementation on top of Hazelcast 3. Currently it supports MapReduce algorithms on IMap, Multimap and IList.
 
 # How to use CastMapR
 
 The API of CastMapR is heavily inspired by the MapReduce implementation of Infinispan (thanks to the guys of RedHat!) and it is completely transparently usable for HazelcastClient connections.
+
+CastMapR supports executing MapReduce tasks on IMap, IList and MultiMap whereas the behavior differs a bit from implementation to implementation.
+
+### IMap ###
++ For IMap it behaves as expected, the Mapper::map method is called once per key-value pair.
+
+### MultiMap ###
++ For MultiMap the Mapper::map method is called once per key-value pair too. That means the MultiMap becomes expanded to a flat representation of key-value pairs before mapping it (a single key can be expected multiple times).
+
+### IList ###
++ For IList the Mapper::map method is called once per entry in the list. The key always yields to null and the value is the entry in the list. 
 
 # Adding CastMapR to your project
 

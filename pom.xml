@@ -190,6 +190,7 @@
                 <include>com/noctarius/castmapr/MapReduceTask.java</include>
                 <include>com/noctarius/castmapr/MapReduceTaskFactory.java</include>
               </sourceFileIncludes>
+              <excludePackageNames>*.core.*:*.core.operation.*:*.client.*</excludePackageNames>
             </configuration>
           </execution>
         </executions>

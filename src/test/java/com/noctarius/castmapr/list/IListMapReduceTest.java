@@ -95,7 +95,6 @@ public class IListMapReduceTest
         MapReduceTask<Integer, Integer, String, Integer> task = factory.build( m1 );
         Map<String, List<Integer>> result = task.mapper( new TestMapper() ).submit();
         assertEquals( 1, result.size() );
-        assertNull( result.keySet().iterator().next() );
         for ( List<Integer> value : result.values() )
         {
             assertEquals( 100, value.size() );

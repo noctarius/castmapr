@@ -131,11 +131,29 @@ public class MapReduceTaskFactory
         return mapReduceTaskBuilder.build( map );
     }
 
+    /**
+     * Builds a {@link MapReduceTask} instance for the given {@link MultiMap} instance. The returning implementation is
+     * depending on the {@link HazelcastInstance} given while creating the MapReduceTaskFactory.<br>
+     * <b>Caution: Do not use the MapReduceTaskFactory with other instances of {@link HazelcastInstance} than the given
+     * one for creation of the factory. Unexpected results could happen!</b>
+     * 
+     * @param multiMap The multimap the created {@link MapReduceTask} should work on.
+     * @return An instance of the {@link MapReduceTask} bound to the given {@link IMap}.
+     */
     public <KeyIn, ValueIn, KeyOut, ValueOut> MapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut> build( MultiMap<KeyIn, ValueIn> multiMap )
     {
         return mapReduceTaskBuilder.build( multiMap );
     }
 
+    /**
+     * Builds a {@link MapReduceTask} instance for the given {@link IList} instance. The returning implementation is
+     * depending on the {@link HazelcastInstance} given while creating the MapReduceTaskFactory.<br>
+     * <b>Caution: Do not use the MapReduceTaskFactory with other instances of {@link HazelcastInstance} than the given
+     * one for creation of the factory. Unexpected results could happen!</b>
+     * 
+     * @param list The list the created {@link MapReduceTask} should work on.
+     * @return An instance of the {@link MapReduceTask} bound to the given {@link IMap}.
+     */
     public <KeyIn, ValueIn, KeyOut, ValueOut> MapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut> build( IList<ValueIn> list )
     {
         return mapReduceTaskBuilder.build( list );
