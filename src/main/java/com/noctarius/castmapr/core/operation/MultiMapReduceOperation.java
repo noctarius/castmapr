@@ -28,7 +28,7 @@ import com.noctarius.castmapr.spi.MultiMapAware;
 import com.noctarius.castmapr.spi.PartitionIdAware;
 import com.noctarius.castmapr.spi.Reducer;
 
-public class MultiMapMapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>
+public class MultiMapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>
     extends AbstractNamedOperation
     implements PartitionAwareOperation
 {
@@ -39,11 +39,11 @@ public class MultiMapMapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>
 
     private transient Object response;
 
-    public MultiMapMapReduceOperation()
+    public MultiMapReduceOperation()
     {
     }
 
-    public MultiMapMapReduceOperation( String name, Mapper<KeyIn, ValueIn, KeyOut, ValueOut> mapper,
+    public MultiMapReduceOperation( String name, Mapper<KeyIn, ValueIn, KeyOut, ValueOut> mapper,
                                        Reducer<KeyOut, ValueOut> reducer )
     {
         super( name );

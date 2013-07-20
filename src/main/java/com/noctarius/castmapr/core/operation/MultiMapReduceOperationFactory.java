@@ -18,17 +18,17 @@ import com.hazelcast.spi.Operation;
 import com.noctarius.castmapr.spi.Mapper;
 import com.noctarius.castmapr.spi.Reducer;
 
-public class IMapMapReduceOperationFactory<KeyIn, ValueIn, KeyOut, ValueOut>
+public class MultiMapReduceOperationFactory<KeyIn, ValueIn, KeyOut, ValueOut>
     extends AbstractMapReduceOperationFactory<KeyIn, ValueIn, KeyOut, ValueOut>
 {
 
-    public IMapMapReduceOperationFactory()
+    public MultiMapReduceOperationFactory()
     {
         super();
     }
 
-    public IMapMapReduceOperationFactory( String name, Mapper<KeyIn, ValueIn, KeyOut, ValueOut> mapper,
-                                          Reducer<KeyOut, ValueOut> reducer, boolean distributableReducer )
+    public MultiMapReduceOperationFactory( String name, Mapper<KeyIn, ValueIn, KeyOut, ValueOut> mapper,
+                                           Reducer<KeyOut, ValueOut> reducer, boolean distributableReducer )
     {
         super( name, mapper, reducer, distributableReducer );
     }
@@ -37,7 +37,7 @@ public class IMapMapReduceOperationFactory<KeyIn, ValueIn, KeyOut, ValueOut>
     public Operation createOperation()
     {
         Reducer r = distributableReducer ? reducer : null;
-        return new IMapMapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>( name, mapper, r );
+        return new MultiMapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>( name, mapper, r );
     }
 
 }

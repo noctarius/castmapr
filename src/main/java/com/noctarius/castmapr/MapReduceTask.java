@@ -15,13 +15,8 @@
 package com.noctarius.castmapr;
 
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
 
 import com.hazelcast.core.IMap;
-import com.noctarius.castmapr.spi.Collator;
-import com.noctarius.castmapr.spi.MapReduceCollatorListener;
-import com.noctarius.castmapr.spi.MapReduceListener;
 import com.noctarius.castmapr.spi.Mapper;
 import com.noctarius.castmapr.spi.Reducer;
 
@@ -49,6 +44,7 @@ import com.noctarius.castmapr.spi.Reducer;
  * MapReduceTask<Integer, Integer, String, Integer> task = factory.build( map );
  * Map<String, Integer> results = task.mapper( buildMapper() ).reducer( buildReducer() ).submit();
  * </pre>
+ * 
  * </p>
  * 
  * @author noctarius
@@ -58,6 +54,7 @@ import com.noctarius.castmapr.spi.Reducer;
  * @param <ValueOut> The value type for mapped results
  */
 public interface MapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut>
+    extends ExecutableMapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut>
 {
 
     /**
@@ -76,90 +73,8 @@ public interface MapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut>
      * @param reducer The tasks reducer
      * @return The instance of this MapReduceTask with generics changed on usage
      */
-    MapReduceTask<KeyOut, ValueOut, KeyOut, ValueOut> reducer( Reducer<KeyOut, ValueOut> reducer );
+    ReducingMapReduceTask<KeyOut, ValueOut, KeyOut, ValueOut> reducer( Reducer<KeyOut, ValueOut> reducer );
 
-    /**
-     * Submits the task to Hazelcast and executes the defined mapper and reducer on all cluster nodes.
-     * 
-     * @return The mapped and possibly reduced result.
-     */
-    Map<KeyIn, ValueIn> submit();
-
-    /**
-     * Submits the task to Hazelcast and executes the defined mapper and reducer on all cluster nodes and executes the
-     * collator before returning the final result.
-     * 
-     * @param collator The collator to use after map and reduce
-     * @return The mapped, possibly reduced and collated result.
-     */
-    <R> R submit( Collator<KeyIn, ValueIn, R> collator );
-
-    /**
-     * <p>
-     * Submits the task to Hazelcast and executes the defined mapper and reducer on all cluster nodes. <br>
-     * This method does not block but the given listener is called when the calculation is done and the result is ready.
-     * </p>
-     * <p>
-     * <b>Caution: Compared to {@link #submitAsync(MapReduceListener, ExecutorService)} which executed the background
-     * job in the given {@link ExecutorService}, this method will execute the task in the Hazelcast threadpool.</b>
-     * </p>
-     * 
-     * @param listener The {@link MapReduceListener} to call after calculation
-     * @return The mapped and possibly reduced result.
-     */
-    void submitAsync( MapReduceListener<KeyIn, ValueIn> listener );
-
-    /**
-     * <p>
-     * Submits the task to Hazelcast and executes the defined mapper and reducer on all cluster nodes. <br>
-     * This method does not block but the given listener is called when the calculation is done and the result is ready.
-     * </p>
-     * <p>
-     * Compared to {@link #submitAsync(MapReduceListener)} which executed the background job in the Hazelcast
-     * threadpool, this method will execute the task in the given {@link ExecutorService}.
-     * </p>
-     * 
-     * @param listener The {@link MapReduceListener} to call after calculation
-     * @param executorService The {@link ExecutorService} the background job is executed at
-     * @return The mapped and possibly reduced result.
-     */
-    void submitAsync( MapReduceListener<KeyIn, ValueIn> listener, ExecutorService executorService );
-
-    /**
-     * <p>
-     * Submits the task to Hazelcast and executes the defined mapper and reducer on all cluster nodes and executes the
-     * collator before returning the final result. <br>
-     * This method does not block but the given listener is called when the calculation is done and the result is ready.
-     * </p>
-     * <p>
-     * <b>Caution: Compared to {@link #submitAsync(Collator, MapReduceCollatorListener, ExecutorService)} which executed
-     * the background job in the given {@link ExecutorService}, this method will execute the task in the Hazelcast
-     * threadpool.</b>
-     * </p>
-     * 
-     * @param collator The collator to use after map and reduce
-     * @param listener The {@link MapReduceCollatorListener} to call after calculation
-     * @return The mapped, possibly reduced and collated result.
-     */
-    <R> void submitAsync( Collator<KeyIn, ValueIn, R> collator, MapReduceCollatorListener<R> listener );
-
-    /**
-     * <p>
-     * Submits the task to Hazelcast and executes the defined mapper and reducer on all cluster nodes and executes the
-     * collator before returning the final result. <br>
-     * This method does not block but the given listener is called when the calculation is done and the result is ready.
-     * </p>
-     * <p>
-     * Compared to {@link #submitAsync(Collator, MapReduceCollatorListener)} which executed the background job in the
-     * Hazelcast threadpool, this method will execute the task in the given {@link ExecutorService}.
-     * </p>
-     * 
-     * @param collator The collator to use after map and reduce
-     * @param listener The {@link MapReduceCollatorListener} to call after calculation
-     * @param executorService The {@link ExecutorService} the background job is executed at
-     * @return The mapped, possibly reduced and collated result.
-     */
-    <R> void submitAsync( Collator<KeyIn, ValueIn, R> collator, MapReduceCollatorListener<R> listener,
-                          ExecutorService executorService );
+    MapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut> onKeys( Iterable<KeyIn> keys );
 
 }

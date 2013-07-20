@@ -14,6 +14,9 @@
 
 package com.noctarius.castmapr.client;
 
+import static com.noctarius.castmapr.core.MapReduceUtils.copyKeys;
+
+import java.util.List;
 import java.util.Map;
 
 import com.hazelcast.client.spi.ClientContext;
@@ -39,29 +42,41 @@ public class MultiMapClientMapReduceTaskProxy<KeyIn, ValueIn, KeyOut, ValueOut>
     }
 
     @Override
-    protected Map<Integer, Object> invokeTasks( boolean distributableReducer )
+    protected Map<Integer, Object> invokeTasks( Iterable<KeyIn> keys, boolean distributableReducer )
         throws Exception
     {
         ClientInvocationService cis = context.getInvocationService();
-        MapReduceRequest<KeyIn, ValueIn, KeyOut, ValueOut> request;
-        request =
-            new MapReduceRequest<KeyIn, ValueIn, KeyOut, ValueOut>( name, mapper, reducer,
-                                                                    ClientMapReduceCollectionType.MultiMap,
-                                                                    distributableReducer );
+        Object request =
+            new KeyedMapReduceClientRequest( name, mapper, reducer, (List<KeyIn>) copyKeys( keys ),
+                                             ClientMapReduceCollectionType.MultiMap, distributableReducer );
         return cis.invokeOnRandomTarget( request );
     }
 
     @Override
-    protected <R> MapReduceBackgroundTask<R> buildMapReduceBackgroundTask( MapReduceListener<KeyIn, ValueIn> listener )
+    protected Map<Integer, Object> invokeTasks( boolean distributableReducer )
+        throws Exception
     {
-        return new ClientMapReduceBackgroundTask( listener );
+        ClientInvocationService cis = context.getInvocationService();
+        AllKeysMapReduceRequest<KeyIn, ValueIn, KeyOut, ValueOut> request;
+        request =
+            new AllKeysMapReduceRequest( name, mapper, reducer, ClientMapReduceCollectionType.MultiMap,
+                                         distributableReducer );
+        return cis.invokeOnRandomTarget( request );
     }
 
     @Override
-    protected <R> MapReduceBackgroundTask<R> buildMapReduceBackgroundTask( Collator<KeyIn, ValueIn, R> collator,
+    protected <R> MapReduceBackgroundTask<R> buildMapReduceBackgroundTask( Iterable<KeyIn> keys,
+                                                                           MapReduceListener<KeyIn, ValueIn> listener )
+    {
+        return new ClientMapReduceBackgroundTask( keys, listener );
+    }
+
+    @Override
+    protected <R> MapReduceBackgroundTask<R> buildMapReduceBackgroundTask( Iterable<KeyIn> keys,
+                                                                           Collator<KeyIn, ValueIn, R> collator,
                                                                            MapReduceCollatorListener<R> collatorListener )
     {
-        return new ClientMapReduceBackgroundTask( collator, collatorListener );
+        return new ClientMapReduceBackgroundTask( keys, collator, collatorListener );
     }
 
     @Override
@@ -75,15 +90,15 @@ public class MultiMapClientMapReduceTaskProxy<KeyIn, ValueIn, KeyOut, ValueOut>
         extends MapReduceBackgroundTask<R>
     {
 
-        private ClientMapReduceBackgroundTask( MapReduceListener<KeyIn, ValueIn> listener )
+        private ClientMapReduceBackgroundTask( Iterable<KeyIn> keys, MapReduceListener<KeyIn, ValueIn> listener )
         {
-            super( listener );
+            super( keys, listener );
         }
 
-        private ClientMapReduceBackgroundTask( Collator<KeyIn, ValueIn, R> collator,
+        private ClientMapReduceBackgroundTask( Iterable<KeyIn> keys, Collator<KeyIn, ValueIn, R> collator,
                                                MapReduceCollatorListener<R> collatorListener )
         {
-            super( collator, collatorListener );
+            super( keys, collator, collatorListener );
         }
 
         @Override
@@ -92,10 +107,20 @@ public class MultiMapClientMapReduceTaskProxy<KeyIn, ValueIn, KeyOut, ValueOut>
             ClientInvocationService cis = context.getInvocationService();
             try
             {
-                MapReduceRequest<KeyIn, ValueIn, KeyOut, ValueOut> request;
-                request =
-                    new MapReduceRequest( name, mapper, reducer, ClientMapReduceCollectionType.MultiMap,
-                                          isDistributableReducer() );
+                Object request;
+                if ( keys == null )
+                {
+                    request =
+                        new AllKeysMapReduceRequest( name, mapper, reducer, ClientMapReduceCollectionType.MultiMap,
+                                                     isDistributableReducer() );
+                }
+                else
+                {
+                    request =
+                        new KeyedMapReduceClientRequest( name, mapper, reducer, (List<KeyIn>) copyKeys( keys ),
+                                                         ClientMapReduceCollectionType.MultiMap,
+                                                         isDistributableReducer() );
+                }
                 Map<Integer, Object> responses = cis.invokeOnRandomTarget( request );
                 Map groupedResponses = groupResponsesByKey( responses );
                 Map reducedResults = finalReduceStep( groupedResponses );

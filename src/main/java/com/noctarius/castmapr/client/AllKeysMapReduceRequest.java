@@ -26,11 +26,11 @@ import com.hazelcast.nio.serialization.DataSerializable;
 import com.hazelcast.spi.OperationFactory;
 import com.noctarius.castmapr.core.operation.IListMapReduceOperationFactory;
 import com.noctarius.castmapr.core.operation.IMapMapReduceOperationFactory;
-import com.noctarius.castmapr.core.operation.MultiMapMapReduceOperationFactory;
+import com.noctarius.castmapr.core.operation.MultiMapReduceOperationFactory;
 import com.noctarius.castmapr.spi.Mapper;
 import com.noctarius.castmapr.spi.Reducer;
 
-public class MapReduceRequest<KeyIn, ValueIn, KeyOut, ValueOut>
+public class AllKeysMapReduceRequest<KeyIn, ValueIn, KeyOut, ValueOut>
     extends AllPartitionsClientRequest
     implements DataSerializable, RetryableRequest
 {
@@ -45,13 +45,13 @@ public class MapReduceRequest<KeyIn, ValueIn, KeyOut, ValueOut>
 
     private String name;
 
-    public MapReduceRequest()
+    public AllKeysMapReduceRequest()
     {
     }
 
-    public MapReduceRequest( String name, Mapper<KeyIn, ValueIn, KeyOut, ValueOut> mapper,
-                             Reducer<KeyOut, ValueOut> reducer, ClientMapReduceCollectionType collectionType,
-                             boolean distributableReducer )
+    public AllKeysMapReduceRequest( String name, Mapper<KeyIn, ValueIn, KeyOut, ValueOut> mapper,
+                                    Reducer<KeyOut, ValueOut> reducer, ClientMapReduceCollectionType collectionType,
+                                    boolean distributableReducer )
     {
         this.name = name;
         this.mapper = mapper;
@@ -91,8 +91,8 @@ public class MapReduceRequest<KeyIn, ValueIn, KeyOut, ValueOut>
                 return new IMapMapReduceOperationFactory<KeyIn, ValueIn, KeyOut, ValueOut>( name, mapper, reducer,
                                                                                             distributableReducer );
             case MultiMap:
-                return new MultiMapMapReduceOperationFactory<KeyIn, ValueIn, KeyOut, ValueOut>( name, mapper, reducer,
-                                                                                                distributableReducer );
+                return new MultiMapReduceOperationFactory<KeyIn, ValueIn, KeyOut, ValueOut>( name, mapper, reducer,
+                                                                                             distributableReducer );
             case IList:
                 return new IListMapReduceOperationFactory<KeyIn, ValueIn, KeyOut, ValueOut>( name, mapper, reducer,
                                                                                              distributableReducer );

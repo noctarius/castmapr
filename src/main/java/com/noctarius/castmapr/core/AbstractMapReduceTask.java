@@ -14,6 +14,8 @@
 
 package com.noctarius.castmapr.core;
 
+import static com.noctarius.castmapr.core.MapReduceUtils.copyKeys;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -27,6 +29,7 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.HazelcastInstanceAware;
 import com.hazelcast.util.ExceptionUtil;
 import com.noctarius.castmapr.MapReduceTask;
+import com.noctarius.castmapr.ReducingMapReduceTask;
 import com.noctarius.castmapr.spi.Collator;
 import com.noctarius.castmapr.spi.Distributable;
 import com.noctarius.castmapr.spi.DistributableReducer;
@@ -36,7 +39,7 @@ import com.noctarius.castmapr.spi.Mapper;
 import com.noctarius.castmapr.spi.Reducer;
 
 public abstract class AbstractMapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut>
-    implements MapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut>
+    implements MapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut>, ReducingMapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut>
 {
 
     protected final String name;
@@ -47,10 +50,19 @@ public abstract class AbstractMapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut>
 
     protected Reducer<KeyOut, ValueOut> reducer;
 
+    protected Iterable<KeyIn> keys;
+
     public AbstractMapReduceTask( String name, HazelcastInstance hazelcastInstance )
     {
         this.name = name;
         this.hazelcastInstance = hazelcastInstance;
+    }
+
+    @Override
+    public MapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut> onKeys( Iterable<KeyIn> keys )
+    {
+        this.keys = keys;
+        return this;
     }
 
     @Override
@@ -65,14 +77,14 @@ public abstract class AbstractMapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut>
     }
 
     @Override
-    public MapReduceTask<KeyOut, ValueOut, KeyOut, ValueOut> reducer( Reducer<KeyOut, ValueOut> reducer )
+    public ReducingMapReduceTask<KeyOut, ValueOut, KeyOut, ValueOut> reducer( Reducer<KeyOut, ValueOut> reducer )
     {
         if ( reducer == null )
             throw new IllegalStateException( "reducer must not be null" );
         if ( this.reducer != null )
             throw new IllegalStateException( "reducer already set" );
         this.reducer = reducer;
-        return (MapReduceTask<KeyOut, ValueOut, KeyOut, ValueOut>) this;
+        return (ReducingMapReduceTask<KeyOut, ValueOut, KeyOut, ValueOut>) this;
     }
 
     @Override
@@ -80,8 +92,15 @@ public abstract class AbstractMapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut>
     {
         try
         {
-
-            Map<Integer, Object> responses = invokeTasks( isDistributableReducer() );
+            Map<Integer, Object> responses;
+            if ( keys != null )
+            {
+                responses = invokeTasks( keys, isDistributableReducer() );
+            }
+            else
+            {
+                responses = invokeTasks( isDistributableReducer() );
+            }
             Map<KeyOut, List<ValueOut>> groupedResponses = groupResponsesByKey( responses );
             return (Map<KeyIn, ValueIn>) finalReduceStep( groupedResponses );
         }
@@ -102,21 +121,21 @@ public abstract class AbstractMapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut>
     @Override
     public void submitAsync( MapReduceListener<KeyIn, ValueIn> listener )
     {
-        MapReduceBackgroundTask<?> task = buildMapReduceBackgroundTask( listener );
+        MapReduceBackgroundTask<?> task = buildMapReduceBackgroundTask( copyKeys( keys ), listener );
         invokeAsyncTask( task );
     }
 
     @Override
     public <R> void submitAsync( Collator<KeyIn, ValueIn, R> collator, MapReduceCollatorListener<R> listener )
     {
-        MapReduceBackgroundTask<R> task = buildMapReduceBackgroundTask( collator, listener );
+        MapReduceBackgroundTask<R> task = buildMapReduceBackgroundTask( copyKeys( keys ), collator, listener );
         invokeAsyncTask( task );
     }
 
     @Override
     public void submitAsync( MapReduceListener<KeyIn, ValueIn> listener, ExecutorService executorService )
     {
-        MapReduceBackgroundTask<?> task = buildMapReduceBackgroundTask( listener );
+        MapReduceBackgroundTask<?> task = buildMapReduceBackgroundTask( copyKeys( keys ), listener );
         executorService.execute( task );
     }
 
@@ -124,7 +143,7 @@ public abstract class AbstractMapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut>
     public <R> void submitAsync( Collator<KeyIn, ValueIn, R> collator, MapReduceCollatorListener<R> listener,
                                  ExecutorService executorService )
     {
-        MapReduceBackgroundTask<R> task = buildMapReduceBackgroundTask( collator, listener );
+        MapReduceBackgroundTask<R> task = buildMapReduceBackgroundTask( copyKeys( keys ), collator, listener );
         executorService.execute( task );
     }
 
@@ -239,9 +258,14 @@ public abstract class AbstractMapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut>
     protected abstract Map<Integer, Object> invokeTasks( boolean distributableReducer )
         throws Exception;
 
-    protected abstract <R> MapReduceBackgroundTask<R> buildMapReduceBackgroundTask( MapReduceListener<KeyIn, ValueIn> listener );
+    protected abstract Map<Integer, Object> invokeTasks( Iterable<KeyIn> keys, boolean distributableReducer )
+        throws Exception;
 
-    protected abstract <R> MapReduceBackgroundTask<R> buildMapReduceBackgroundTask( Collator<KeyIn, ValueIn, R> collator,
+    protected abstract <R> MapReduceBackgroundTask<R> buildMapReduceBackgroundTask( Iterable<KeyIn> keys,
+                                                                                    MapReduceListener<KeyIn, ValueIn> listener );
+
+    protected abstract <R> MapReduceBackgroundTask<R> buildMapReduceBackgroundTask( Iterable<KeyIn> keys,
+                                                                                    Collator<KeyIn, ValueIn, R> collator,
                                                                                     MapReduceCollatorListener<R> collatorListener );
 
     protected abstract <R> void invokeAsyncTask( MapReduceBackgroundTask<R> task );
@@ -256,16 +280,20 @@ public abstract class AbstractMapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut>
 
         protected final Collator<KeyIn, ValueIn, R> collator;
 
-        protected MapReduceBackgroundTask( MapReduceListener<KeyIn, ValueIn> listener )
+        protected final Iterable<KeyIn> keys;
+
+        protected MapReduceBackgroundTask( Iterable<KeyIn> keys, MapReduceListener<KeyIn, ValueIn> listener )
         {
+            this.keys = keys;
             this.listener = listener;
             this.collator = null;
             this.collatorListener = null;
         }
 
-        protected MapReduceBackgroundTask( Collator<KeyIn, ValueIn, R> collator,
+        protected MapReduceBackgroundTask( Iterable<KeyIn> keys, Collator<KeyIn, ValueIn, R> collator,
                                            MapReduceCollatorListener<R> collatorListener )
         {
+            this.keys = keys;
             this.collator = collator;
             this.collatorListener = collatorListener;
             this.listener = null;
