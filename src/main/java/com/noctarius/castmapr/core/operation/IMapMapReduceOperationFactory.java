@@ -37,7 +37,7 @@ public class IMapMapReduceOperationFactory<KeyIn, ValueIn, KeyOut, ValueOut>
     public Operation createOperation()
     {
         Reducer r = distributableReducer ? reducer : null;
-        return new IMapMapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>( name, mapper, r );
+        return new IMapMapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>( name, mapper, r, null );
     }
 
 }

@@ -15,6 +15,7 @@
 package com.noctarius.castmapr.core.operation;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,6 +45,8 @@ public class IMapMapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>
 
     private Reducer<KeyOut, ValueOut> reducer;
 
+    private List<KeyIn> keys;
+
     private transient Object response;
 
     public IMapMapReduceOperation()
@@ -51,11 +54,12 @@ public class IMapMapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>
     }
 
     public IMapMapReduceOperation( String name, Mapper<KeyIn, ValueIn, KeyOut, ValueOut> mapper,
-                               Reducer<KeyOut, ValueOut> reducer )
+                                   Reducer<KeyOut, ValueOut> reducer, List<KeyIn> keys )
     {
         super( name );
         this.mapper = mapper;
         this.reducer = reducer;
+        this.keys = keys;
     }
 
     @Override
@@ -78,11 +82,25 @@ public class IMapMapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>
         RecordStore recordStore = mapService.getRecordStore( partitionId, name );
 
         mapper.initialize( collector );
-        for ( Entry<Data, Data> entry : recordStore.entrySetData() )
+        // Without defined keys iterate all keys
+        if ( keys.size() == 0 )
         {
-            KeyIn key = (KeyIn) mapService.toObject( entry.getKey() );
-            ValueIn value = (ValueIn) mapService.toObject( entry.getValue() );
-            mapper.map( key, value, collector );
+            for ( Entry<Data, Data> entry : recordStore.entrySetData() )
+            {
+                KeyIn key = (KeyIn) mapService.toObject( entry.getKey() );
+                ValueIn value = (ValueIn) mapService.toObject( entry.getValue() );
+                mapper.map( key, value, collector );
+            }
+        }
+        else
+        {
+            // Iterate only defined keys
+            for ( KeyIn key : keys )
+            {
+                Data dataKey = mapService.toData( key );
+                ValueIn value = (ValueIn) mapService.toObject( recordStore.get( dataKey ) );
+                mapper.map( key, value, collector );
+            }
         }
         mapper.finalized( collector );
 
@@ -123,6 +141,11 @@ public class IMapMapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>
         super.writeInternal( out );
         out.writeObject( mapper );
         out.writeObject( reducer );
+        out.writeInt( keys == null ? 0 : keys.size() );
+        for ( KeyIn key : keys )
+        {
+            out.writeObject( key );
+        }
     }
 
     @Override
@@ -132,6 +155,12 @@ public class IMapMapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>
         super.readInternal( in );
         mapper = in.readObject();
         reducer = in.readObject();
+        int size = in.readInt();
+        keys = new ArrayList<KeyIn>( size );
+        for ( int i = 0; i < size; i++ )
+        {
+            keys.add( (KeyIn) in.readObject() );
+        }
     }
 
 }

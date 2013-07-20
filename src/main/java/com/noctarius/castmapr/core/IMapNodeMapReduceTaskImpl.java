@@ -14,15 +14,25 @@
 
 package com.noctarius.castmapr.core;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.MapService;
+import com.hazelcast.nio.serialization.Data;
+import com.hazelcast.nio.serialization.SerializationService;
 import com.hazelcast.partition.PartitionService;
+import com.hazelcast.spi.Invocation;
+import com.hazelcast.spi.InvocationBuilder;
 import com.hazelcast.spi.NodeEngine;
+import com.hazelcast.spi.Operation;
 import com.hazelcast.spi.OperationService;
 import com.hazelcast.spi.impl.BinaryOperationFactory;
 import com.hazelcast.util.ExceptionUtil;
@@ -31,6 +41,8 @@ import com.noctarius.castmapr.spi.Collator;
 import com.noctarius.castmapr.spi.MapReduceCollatorListener;
 import com.noctarius.castmapr.spi.MapReduceListener;
 import com.noctarius.castmapr.spi.Reducer;
+
+import static com.noctarius.castmapr.core.MapReduceUtils.*;
 
 public class IMapNodeMapReduceTaskImpl<KeyIn, ValueIn, KeyOut, ValueOut>
     extends AbstractMapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut>
@@ -49,19 +61,65 @@ public class IMapNodeMapReduceTaskImpl<KeyIn, ValueIn, KeyOut, ValueOut>
         throws Exception
     {
         OperationService os = nodeEngine.getOperationService();
+        PartitionService partitionService = nodeEngine.getPartitionService();
+        SerializationService ss = nodeEngine.getSerializationService();
 
         Reducer r = distributableReducer ? reducer : null;
-        IMapMapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut> operation;
-        operation = new IMapMapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>( name, mapper, r );
-        operation.setNodeEngine( nodeEngine ).setCallerUuid( nodeEngine.getLocalMember().getUuid() );
-        PartitionService ps = nodeEngine.getPartitionService();
-        Set<Integer> partitions = new HashSet<Integer>();
-        for ( KeyIn key : keys )
+        Map<Integer, List<KeyIn>> keyMapping = mapKeysToPartitions( partitionService, (List<KeyIn>) copyKeys( keys ) );
+        Map<Integer, Future<?>> futures = new HashMap<Integer, Future<?>>();
+        for ( Entry<Integer, List<KeyIn>> entry : keyMapping.entrySet() )
         {
-            partitions.add( ps.getPartitionId( key ) );
+            Operation operation = new IMapMapReduceOperation( name, mapper, r, entry.getValue() );
+            operation.setNodeEngine( nodeEngine ).setCallerUuid( nodeEngine.getLocalMember().getUuid() );
+            InvocationBuilder inv = os.createInvocationBuilder( MapService.SERVICE_NAME, operation, entry.getKey() );
+            Invocation invocation = inv.build();
+            futures.put( entry.getKey(), invocation.invoke() );
         }
-        return os.invokeOnPartitions( MapService.SERVICE_NAME, new BinaryOperationFactory( operation, nodeEngine ),
-                                      partitions );
+
+        Map<Integer, Object> results = new HashMap<Integer, Object>();
+        for ( Entry<Integer, Future<?>> entry : futures.entrySet() )
+        {
+            try
+            {
+                results.put( entry.getKey(), toObject( ss, entry.getValue().get() ) );
+            }
+            catch ( Throwable t )
+            {
+                results.put( entry.getKey(), t );
+            }
+        }
+
+        List<Integer> failedPartitions = new LinkedList<Integer>();
+        for ( Entry<Integer, Object> entry : results.entrySet() )
+        {
+            if ( entry.getValue() instanceof Throwable )
+            {
+                failedPartitions.add( entry.getKey() );
+            }
+        }
+
+        for ( Integer partitionId : failedPartitions )
+        {
+            Operation operation = new IMapMapReduceOperation( name, mapper, r, keyMapping.get( partitionId ) );
+            InvocationBuilder inv = os.createInvocationBuilder( MapService.SERVICE_NAME, operation, partitionId );
+            Invocation invocation = inv.build();
+            results.put( partitionId, invocation.invoke() );
+        }
+
+        for ( Integer failedPartition : failedPartitions )
+        {
+            try
+            {
+                Future<?> future = (Future<?>) results.get( failedPartition );
+                Object result = future.get();
+                results.put( failedPartition, result );
+            }
+            catch ( Throwable t )
+            {
+                results.put( failedPartition, t );
+            }
+        }
+        return results;
     }
 
     @Override
@@ -72,7 +130,7 @@ public class IMapNodeMapReduceTaskImpl<KeyIn, ValueIn, KeyOut, ValueOut>
 
         Reducer r = distributableReducer ? reducer : null;
         IMapMapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut> operation;
-        operation = new IMapMapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>( name, mapper, r );
+        operation = new IMapMapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>( name, mapper, r, null );
         operation.setNodeEngine( nodeEngine ).setCallerUuid( nodeEngine.getLocalMember().getUuid() );
         return os.invokeOnAllPartitions( MapService.SERVICE_NAME, new BinaryOperationFactory( operation, nodeEngine ) );
     }
@@ -120,7 +178,7 @@ public class IMapNodeMapReduceTaskImpl<KeyIn, ValueIn, KeyOut, ValueOut>
             OperationService os = nodeEngine.getOperationService();
             Reducer r = isDistributableReducer() ? reducer : null;
             IMapMapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut> operation;
-            operation = new IMapMapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>( name, mapper, r );
+            operation = new IMapMapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>( name, mapper, r, null );
             operation.setNodeEngine( nodeEngine ).setCallerUuid( nodeEngine.getLocalMember().getUuid() );
             try
             {
@@ -164,4 +222,12 @@ public class IMapNodeMapReduceTaskImpl<KeyIn, ValueIn, KeyOut, ValueOut>
         }
     }
 
+    private Object toObject( SerializationService ss, Object value )
+    {
+        if ( value instanceof Data )
+        {
+            return ss.toObject( (Data) value );
+        }
+        return value;
+    }
 }

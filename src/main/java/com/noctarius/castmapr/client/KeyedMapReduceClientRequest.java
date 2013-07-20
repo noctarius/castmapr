@@ -140,6 +140,7 @@ public class KeyedMapReduceClientRequest<KeyIn, ValueIn, KeyOut, ValueOut>
     public void writeData( ObjectDataOutput out )
         throws IOException
     {
+        out.writeUTF( name );
         out.writeObject( mapper );
         out.writeObject( reducer );
         out.writeInt( keys == null ? 0 : keys.size() );
@@ -155,6 +156,7 @@ public class KeyedMapReduceClientRequest<KeyIn, ValueIn, KeyOut, ValueOut>
     public void readData( ObjectDataInput in )
         throws IOException
     {
+        name = in.readUTF();
         mapper = in.readObject();
         reducer = in.readObject();
         int size = in.readInt();
@@ -180,7 +182,7 @@ public class KeyedMapReduceClientRequest<KeyIn, ValueIn, KeyOut, ValueOut>
                     public Operation createOperation( int partitionId, List<KeyIn> keys )
                     {
                         // TODO
-                        return new IMapMapReduceOperation( getServiceName(), mapper, reducer );
+                        return new IMapMapReduceOperation( name, mapper, reducer, keys );
                     }
                 };
             case MultiMap:
@@ -191,7 +193,7 @@ public class KeyedMapReduceClientRequest<KeyIn, ValueIn, KeyOut, ValueOut>
                     public Operation createOperation( int partitionId, List<KeyIn> keys )
                     {
                         // TODO
-                        return new MultiMapReduceOperation( getServiceName(), mapper, reducer );
+                        return new MultiMapReduceOperation( name, mapper, reducer );
                     }
                 };
             case IList:
@@ -202,7 +204,7 @@ public class KeyedMapReduceClientRequest<KeyIn, ValueIn, KeyOut, ValueOut>
                     public Operation createOperation( int partitionId, List<KeyIn> keys )
                     {
                         // TODO
-                        return new IListMapReduceOperation( getServiceName(), mapper, reducer );
+                        return new IListMapReduceOperation( name, mapper, reducer );
                     }
                 };
             default:

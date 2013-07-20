@@ -16,6 +16,7 @@ package com.noctarius.castmapr;
 
 import static org.junit.Assert.assertEquals;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -171,6 +172,36 @@ public class ClientMapReduceTest
         {
             assertEquals( expectedResult, result );
         }
+
+        Set<String> hazelcastNames = context.getHazelcastNames();
+        assertEquals( 0, hazelcastNames.size() );
+    }
+
+    @Test
+    // ( timeout = 20000 )
+    public void testKeyedMapperCollator()
+        throws Exception
+    {
+        Config config = buildConfig();
+        CountingManagedContext context = (CountingManagedContext) config.getManagedContext();
+
+        HazelcastInstance h1 = Hazelcast.newHazelcastInstance( config );
+        HazelcastInstance h2 = Hazelcast.newHazelcastInstance( config );
+        HazelcastInstance h3 = Hazelcast.newHazelcastInstance( config );
+
+        HazelcastInstance client = HazelcastClient.newHazelcastClient( null );
+        IMap<Integer, Integer> m1 = client.getMap( MAP_NAME );
+        for ( int i = 0; i < 10000; i++ )
+        {
+            m1.put( i, i );
+        }
+
+        MapReduceTaskFactory factory = MapReduceTaskFactory.newInstance( client );
+        MapReduceTask<Integer, Integer, String, Integer> task = factory.build( m1 );
+        int result =
+            task.onKeys( Arrays.asList( new Integer[] { 50 } ) ).mapper( new TestMapper() ).submit( new GroupingTestCollator() );
+
+        assertEquals( 50, result );
 
         Set<String> hazelcastNames = context.getHazelcastNames();
         assertEquals( 0, hazelcastNames.size() );
