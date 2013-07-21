@@ -57,9 +57,12 @@ abstract class AbstractMapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>
         out.writeObject( mapper );
         out.writeObject( reducer );
         out.writeInt( keys == null ? 0 : keys.size() );
-        for ( KeyIn key : keys )
+        if ( keys != null )
         {
-            out.writeObject( key );
+            for ( KeyIn key : keys )
+            {
+                out.writeObject( key );
+            }
         }
     }
 

@@ -84,7 +84,7 @@ public class IMapMapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>
 
         mapper.initialize( collector );
         // Without defined keys iterate all keys
-        if ( keys.size() == 0 )
+        if ( keys == null || keys.size() == 0 )
         {
             for ( Entry<Data, Data> entry : recordStore.entrySetData() )
             {
