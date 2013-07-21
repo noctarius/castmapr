@@ -16,16 +16,20 @@ package com.noctarius.castmapr.client;
 
 import static com.noctarius.castmapr.core.MapReduceUtils.copyKeys;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.hazelcast.client.spi.ClientContext;
 import com.hazelcast.client.spi.ClientExecutionService;
 import com.hazelcast.client.spi.ClientInvocationService;
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.IMap;
 import com.hazelcast.util.ExceptionUtil;
 import com.noctarius.castmapr.core.AbstractMapReduceTask;
 import com.noctarius.castmapr.spi.Collator;
+import com.noctarius.castmapr.spi.KeyPredicate;
 import com.noctarius.castmapr.spi.MapReduceCollatorListener;
 import com.noctarius.castmapr.spi.MapReduceListener;
 
@@ -77,6 +81,22 @@ public class IMapClientMapReduceTaskProxy<KeyIn, ValueIn, KeyOut, ValueOut>
                                                                            MapReduceCollatorListener<R> collatorListener )
     {
         return new ClientMapReduceBackgroundTask( keys, collator, collatorListener );
+    }
+
+    @Override
+    protected List<KeyIn> evaluateKeys( KeyPredicate<KeyIn> predicate )
+    {
+        IMap<KeyIn, ValueIn> map = hazelcastInstance.getMap( name );
+        Set<KeyIn> keys = map.keySet();
+        List<KeyIn> result = new ArrayList<KeyIn>();
+        for ( KeyIn key : keys )
+        {
+            if ( predicate.evaluate( key ) )
+            {
+                result.add( key );
+            }
+        }
+        return result.size() > 0 ? result : null;
     }
 
     @Override

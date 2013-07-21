@@ -17,6 +17,7 @@ package com.noctarius.castmapr;
 import java.util.List;
 
 import com.hazelcast.core.IMap;
+import com.noctarius.castmapr.spi.KeyPredicate;
 import com.noctarius.castmapr.spi.Mapper;
 import com.noctarius.castmapr.spi.Reducer;
 
@@ -85,11 +86,24 @@ public interface MapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut>
 
     /**
      * Defines keys to execute the mapper and a possibly defined reducer against. If keys are known before submitting
-     * the task setting them can improve execution speed.
+     * the task setting them can improve execution speed.<br>
+     * This method can be used in conjunction with {@link #keyPredicate(KeyPredicate)} to define a range of known and
+     * evaluated keys.
      * 
      * @param keys The keys to be executed against
      * @return The instance of this MapReduceTask with generics changed on usage
      */
     MapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut> onKeys( KeyIn... keys );
+
+    /**
+     * Defines the {@link KeyPredicate} implementation to preselect keys the MapReduce task will be executed on.
+     * Preselecting keys can speed up the job massively.<br>
+     * This method can be used in conjunction with {@link #onKeys(Iterable)} or {@link #onKeys(Object...)} to define a
+     * range of known and evaluated keys.
+     * 
+     * @param predicate The predicate implementation to be used to evaluate keys
+     * @return The instance of this MapReduceTask with generics changed on usage
+     */
+    MapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut> keyPredicate( KeyPredicate<KeyIn> predicate );
 
 }

@@ -16,6 +16,7 @@ package com.noctarius.castmapr.core;
 
 import static com.noctarius.castmapr.core.MapReduceUtils.copyKeys;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +24,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.MultiMap;
 import com.hazelcast.map.MapService;
 import com.hazelcast.partition.PartitionService;
 import com.hazelcast.spi.NodeEngine;
@@ -31,6 +33,7 @@ import com.hazelcast.spi.impl.BinaryOperationFactory;
 import com.hazelcast.util.ExceptionUtil;
 import com.noctarius.castmapr.core.operation.MultiMapReduceOperation;
 import com.noctarius.castmapr.spi.Collator;
+import com.noctarius.castmapr.spi.KeyPredicate;
 import com.noctarius.castmapr.spi.MapReduceCollatorListener;
 import com.noctarius.castmapr.spi.MapReduceListener;
 import com.noctarius.castmapr.spi.Reducer;
@@ -95,6 +98,22 @@ public class MultiMapNodeMapReduceTaskImpl<KeyIn, ValueIn, KeyOut, ValueOut>
                                                                            MapReduceCollatorListener<R> collatorListener )
     {
         return new NodeMapReduceBackgroundTask<R>( keys, collator, collatorListener );
+    }
+
+    @Override
+    protected List<KeyIn> evaluateKeys( KeyPredicate<KeyIn> predicate )
+    {
+        MultiMap<KeyIn, ValueIn> map = hazelcastInstance.getMultiMap( name );
+        Set<KeyIn> keys = map.keySet();
+        List<KeyIn> result = new ArrayList<KeyIn>();
+        for ( KeyIn key : keys )
+        {
+            if ( predicate.evaluate( key ) )
+            {
+                result.add( key );
+            }
+        }
+        return result.size() > 0 ? result : null;
     }
 
     @Override

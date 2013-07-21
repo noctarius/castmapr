@@ -22,8 +22,7 @@ import com.noctarius.castmapr.MapReduceTask;
  * <b>Caution: Implementations need to be fully threadsafe!</b>
  * 
  * @author noctarius
- * @param <Key> The type of keys
- * @param <Value> The type of values
+ * @param <R> The type of the result
  */
 public interface MapReduceCollatorListener<R>
 {
@@ -31,7 +30,7 @@ public interface MapReduceCollatorListener<R>
     /**
      * This method is called when a calculation of the {@link MapReduceTask} is finished.
      * 
-     * @param reducedResults The mapped, reduced and collated result.
+     * @param result The mapped, reduced and collated result.
      */
     void onCompletion( R result );
 

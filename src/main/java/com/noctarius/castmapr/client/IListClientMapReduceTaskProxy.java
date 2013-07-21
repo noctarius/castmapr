@@ -25,8 +25,10 @@ import com.hazelcast.client.spi.ClientInvocationService;
 import com.hazelcast.collection.CollectionProxyType;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.util.ExceptionUtil;
+import com.noctarius.castmapr.MapReduceTask;
 import com.noctarius.castmapr.core.AbstractMapReduceTask;
 import com.noctarius.castmapr.spi.Collator;
+import com.noctarius.castmapr.spi.KeyPredicate;
 import com.noctarius.castmapr.spi.MapReduceCollatorListener;
 import com.noctarius.castmapr.spi.MapReduceListener;
 
@@ -78,6 +80,39 @@ public class IListClientMapReduceTaskProxy<KeyIn, ValueIn, KeyOut, ValueOut>
                                                                            MapReduceCollatorListener<R> collatorListener )
     {
         return new ClientMapReduceBackgroundTask( keys, collator, collatorListener );
+    }
+
+    /**
+     * @throws UnsupportedOperationException IList MapReduce tasks do not support keys
+     */
+    @Override
+    public MapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut> onKeys( Iterable<KeyIn> keys )
+    {
+        throw new UnsupportedOperationException( "IList MapReduce tasks do not support keys" );
+    }
+
+    /**
+     * @throws UnsupportedOperationException IList MapReduce tasks do not support keys
+     */
+    @Override
+    public MapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut> onKeys( KeyIn... keys )
+    {
+        throw new UnsupportedOperationException( "IList MapReduce tasks do not support keys" );
+    }
+
+    /**
+     * @throws UnsupportedOperationException IList MapReduce tasks do not support keys
+     */
+    @Override
+    public MapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut> keyPredicate( KeyPredicate<KeyIn> predicate )
+    {
+        throw new UnsupportedOperationException( "IList MapReduce tasks do not support keys" );
+    }
+
+    @Override
+    protected List<KeyIn> evaluateKeys( KeyPredicate<KeyIn> predicate )
+    {
+        return null;
     }
 
     @Override

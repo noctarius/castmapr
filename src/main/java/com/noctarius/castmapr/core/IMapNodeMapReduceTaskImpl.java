@@ -14,17 +14,21 @@
 
 package com.noctarius.castmapr.core;
 
+import static com.noctarius.castmapr.core.MapReduceUtils.copyKeys;
+import static com.noctarius.castmapr.core.MapReduceUtils.mapKeysToPartitions;
+
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.IMap;
 import com.hazelcast.map.MapService;
 import com.hazelcast.nio.serialization.Data;
 import com.hazelcast.nio.serialization.SerializationService;
@@ -38,11 +42,10 @@ import com.hazelcast.spi.impl.BinaryOperationFactory;
 import com.hazelcast.util.ExceptionUtil;
 import com.noctarius.castmapr.core.operation.IMapMapReduceOperation;
 import com.noctarius.castmapr.spi.Collator;
+import com.noctarius.castmapr.spi.KeyPredicate;
 import com.noctarius.castmapr.spi.MapReduceCollatorListener;
 import com.noctarius.castmapr.spi.MapReduceListener;
 import com.noctarius.castmapr.spi.Reducer;
-
-import static com.noctarius.castmapr.core.MapReduceUtils.*;
 
 public class IMapNodeMapReduceTaskImpl<KeyIn, ValueIn, KeyOut, ValueOut>
     extends AbstractMapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut>
@@ -120,6 +123,22 @@ public class IMapNodeMapReduceTaskImpl<KeyIn, ValueIn, KeyOut, ValueOut>
             }
         }
         return results;
+    }
+
+    @Override
+    protected List<KeyIn> evaluateKeys( KeyPredicate<KeyIn> predicate )
+    {
+        IMap<KeyIn, ValueIn> map = hazelcastInstance.getMap( name );
+        Set<KeyIn> keys = map.keySet();
+        List<KeyIn> result = new ArrayList<KeyIn>();
+        for ( KeyIn key : keys )
+        {
+            if ( predicate.evaluate( key ) )
+            {
+                result.add( key );
+            }
+        }
+        return result.size() > 0 ? result : null;
     }
 
     @Override

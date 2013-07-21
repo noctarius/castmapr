@@ -51,7 +51,6 @@ public interface ExecutableMapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut>
      * </p>
      * 
      * @param listener The {@link MapReduceListener} to call after calculation
-     * @return The mapped and possibly reduced result.
      */
     void submitAsync( MapReduceListener<KeyIn, ValueIn> listener );
 
@@ -67,7 +66,6 @@ public interface ExecutableMapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut>
      * 
      * @param listener The {@link MapReduceListener} to call after calculation
      * @param executorService The {@link ExecutorService} the background job is executed at
-     * @return The mapped and possibly reduced result.
      */
     void submitAsync( MapReduceListener<KeyIn, ValueIn> listener, ExecutorService executorService );
 
@@ -85,7 +83,6 @@ public interface ExecutableMapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut>
      * 
      * @param collator The collator to use after map and reduce
      * @param listener The {@link MapReduceCollatorListener} to call after calculation
-     * @return The mapped, possibly reduced and collated result.
      */
     <R> void submitAsync( Collator<KeyIn, ValueIn, R> collator, MapReduceCollatorListener<R> listener );
 
@@ -103,7 +100,6 @@ public interface ExecutableMapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut>
      * @param collator The collator to use after map and reduce
      * @param listener The {@link MapReduceCollatorListener} to call after calculation
      * @param executorService The {@link ExecutorService} the background job is executed at
-     * @return The mapped, possibly reduced and collated result.
      */
     <R> void submitAsync( Collator<KeyIn, ValueIn, R> collator, MapReduceCollatorListener<R> listener,
                           ExecutorService executorService );

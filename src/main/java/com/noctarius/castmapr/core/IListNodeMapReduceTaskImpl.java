@@ -15,6 +15,7 @@
 package com.noctarius.castmapr.core;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -29,6 +30,7 @@ import com.hazelcast.util.ExceptionUtil;
 import com.noctarius.castmapr.MapReduceTask;
 import com.noctarius.castmapr.core.operation.IListMapReduceOperation;
 import com.noctarius.castmapr.spi.Collator;
+import com.noctarius.castmapr.spi.KeyPredicate;
 import com.noctarius.castmapr.spi.MapReduceCollatorListener;
 import com.noctarius.castmapr.spi.MapReduceListener;
 import com.noctarius.castmapr.spi.Reducer;
@@ -61,6 +63,21 @@ public class IListNodeMapReduceTaskImpl<KeyIn, ValueIn, KeyOut, ValueOut>
     public MapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut> onKeys( KeyIn... keys )
     {
         throw new UnsupportedOperationException( "IList MapReduce tasks do not support keys" );
+    }
+
+    /**
+     * @throws UnsupportedOperationException IList MapReduce tasks do not support keys
+     */
+    @Override
+    public MapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut> keyPredicate( KeyPredicate<KeyIn> predicate )
+    {
+        throw new UnsupportedOperationException( "IList MapReduce tasks do not support keys" );
+    }
+
+    @Override
+    protected List<KeyIn> evaluateKeys( KeyPredicate<KeyIn> predicate )
+    {
+        return null;
     }
 
     @Override

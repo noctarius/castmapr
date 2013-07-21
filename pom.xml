@@ -133,7 +133,8 @@
               com.hazelcast.multimap.*,
               com.hazelcast.spi.*,
               com.hazelcast.nio.*,
-              com.hazelcast.instance.*
+              com.hazelcast.instance.*,
+              com.hazelcast.partition.*
             </Import-Package>
           </instructions>
         </configuration>
@@ -151,13 +152,18 @@
         <groupId>org.apache.rat</groupId>
         <artifactId>apache-rat-plugin</artifactId>
         <version>0.9</version>
+        <executions>
+          <execution>
+            <phase>verify</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
         <configuration>
-          <licenses>
-            <license>
-              <name>Apache License 2.0</name>
-              <url>http://www.spdx.org/licenses/Apache-2.0</url>
-            </license>
-          </licenses>
+          <excludes>
+            <exclude>README.md</exclude>
+          </excludes>
         </configuration>
       </plugin>
       <plugin>

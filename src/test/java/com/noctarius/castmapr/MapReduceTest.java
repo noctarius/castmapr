@@ -45,6 +45,7 @@ import com.noctarius.castmapr.ClientMapReduceTest.GroupingTestCollator;
 import com.noctarius.castmapr.ClientMapReduceTest.TestMapper;
 import com.noctarius.castmapr.spi.Collator;
 import com.noctarius.castmapr.spi.Collector;
+import com.noctarius.castmapr.spi.KeyPredicate;
 import com.noctarius.castmapr.spi.MapReduceCollatorListener;
 import com.noctarius.castmapr.spi.MapReduceListener;
 import com.noctarius.castmapr.spi.Mapper;
@@ -103,8 +104,7 @@ public class MapReduceTest
         assertEquals( 0, hazelcastNames.size() );
     }
 
-    @Test
-    // ( timeout = 20000 )
+    @Test( timeout = 20000 )
     public void testKeyedMapperCollator()
         throws Exception
     {
@@ -126,6 +126,43 @@ public class MapReduceTest
         MapReduceTaskFactory factory = MapReduceTaskFactory.newInstance( h1 );
         MapReduceTask<Integer, Integer, String, Integer> task = factory.build( m1 );
         int result = task.onKeys( 50 ).mapper( new TestMapper() ).submit( new GroupingTestCollator() );
+
+        assertEquals( 50, result );
+
+        Set<String> hazelcastNames = context.getHazelcastNames();
+        assertEquals( 0, hazelcastNames.size() );
+    }
+
+    @Test( timeout = 20000 )
+    public void testKeyPredicateMapperCollator()
+        throws Exception
+    {
+        TestHazelcastInstanceFactory nodeFactory = createHazelcastInstanceFactory( 4 );
+        final CountingManagedContext context = new CountingManagedContext();
+        final Config config = new Config();
+        config.setManagedContext( context );
+
+        HazelcastInstance h1 = nodeFactory.newHazelcastInstance( config );
+        HazelcastInstance h2 = nodeFactory.newHazelcastInstance( config );
+        HazelcastInstance h3 = nodeFactory.newHazelcastInstance( config );
+
+        IMap<Integer, Integer> m1 = h1.getMap( MAP_NAME );
+        for ( int i = 0; i < 10000; i++ )
+        {
+            m1.put( i, i );
+        }
+
+        MapReduceTaskFactory factory = MapReduceTaskFactory.newInstance( h1 );
+        MapReduceTask<Integer, Integer, String, Integer> task = factory.build( m1 );
+        int result = task.keyPredicate( new KeyPredicate<Integer>()
+        {
+
+            @Override
+            public boolean evaluate( Integer key )
+            {
+                return key == 50;
+            }
+        } ).mapper( new TestMapper() ).submit( new GroupingTestCollator() );
 
         assertEquals( 50, result );
 

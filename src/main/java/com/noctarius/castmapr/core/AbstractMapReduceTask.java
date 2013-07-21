@@ -34,6 +34,7 @@ import com.noctarius.castmapr.ReducingMapReduceTask;
 import com.noctarius.castmapr.spi.Collator;
 import com.noctarius.castmapr.spi.Distributable;
 import com.noctarius.castmapr.spi.DistributableReducer;
+import com.noctarius.castmapr.spi.KeyPredicate;
 import com.noctarius.castmapr.spi.MapReduceCollatorListener;
 import com.noctarius.castmapr.spi.MapReduceListener;
 import com.noctarius.castmapr.spi.Mapper;
@@ -53,6 +54,8 @@ public abstract class AbstractMapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut>
 
     protected Iterable<KeyIn> keys;
 
+    protected transient KeyPredicate<KeyIn> predicate;
+
     public AbstractMapReduceTask( String name, HazelcastInstance hazelcastInstance )
     {
         this.name = name;
@@ -70,6 +73,13 @@ public abstract class AbstractMapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut>
     public MapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut> onKeys( KeyIn... keys )
     {
         this.keys = Arrays.asList( keys );
+        return this;
+    }
+
+    @Override
+    public MapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut> keyPredicate( KeyPredicate<KeyIn> predicate )
+    {
+        this.predicate = predicate;
         return this;
     }
 
@@ -98,6 +108,7 @@ public abstract class AbstractMapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut>
     @Override
     public Map<KeyIn, ValueIn> submit()
     {
+        List<KeyIn> keys = buildKeys();
         try
         {
             Map<Integer, Object> responses;
@@ -129,6 +140,7 @@ public abstract class AbstractMapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut>
     @Override
     public void submitAsync( MapReduceListener<KeyIn, ValueIn> listener )
     {
+        List<KeyIn> keys = buildKeys();
         MapReduceBackgroundTask<?> task = buildMapReduceBackgroundTask( copyKeys( keys ), listener );
         invokeAsyncTask( task );
     }
@@ -136,6 +148,7 @@ public abstract class AbstractMapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut>
     @Override
     public <R> void submitAsync( Collator<KeyIn, ValueIn, R> collator, MapReduceCollatorListener<R> listener )
     {
+        List<KeyIn> keys = buildKeys();
         MapReduceBackgroundTask<R> task = buildMapReduceBackgroundTask( copyKeys( keys ), collator, listener );
         invokeAsyncTask( task );
     }
@@ -143,6 +156,7 @@ public abstract class AbstractMapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut>
     @Override
     public void submitAsync( MapReduceListener<KeyIn, ValueIn> listener, ExecutorService executorService )
     {
+        List<KeyIn> keys = buildKeys();
         MapReduceBackgroundTask<?> task = buildMapReduceBackgroundTask( copyKeys( keys ), listener );
         executorService.execute( task );
     }
@@ -151,6 +165,7 @@ public abstract class AbstractMapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut>
     public <R> void submitAsync( Collator<KeyIn, ValueIn, R> collator, MapReduceCollatorListener<R> listener,
                                  ExecutorService executorService )
     {
+        List<KeyIn> keys = buildKeys();
         MapReduceBackgroundTask<R> task = buildMapReduceBackgroundTask( copyKeys( keys ), collator, listener );
         executorService.execute( task );
     }
@@ -262,6 +277,34 @@ public abstract class AbstractMapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut>
 
         return DistributableReducer.class.isAssignableFrom( clazz );
     }
+
+    protected List<KeyIn> buildKeys()
+    {
+        if ( keys == null && predicate == null )
+        {
+            return null;
+        }
+        List<KeyIn> keys = null;
+        if ( this.keys != null )
+        {
+            keys = (List<KeyIn>) MapReduceUtils.copyKeys( this.keys );
+        }
+        if ( predicate != null )
+        {
+            if ( keys == null )
+            {
+                keys = new ArrayList<KeyIn>();
+            }
+            List<KeyIn> evaluatedKeys = evaluateKeys( predicate );
+            if ( evaluatedKeys != null )
+            {
+                keys.addAll( evaluatedKeys );
+            }
+        }
+        return keys.size() > 0 ? keys : null;
+    }
+
+    protected abstract List<KeyIn> evaluateKeys( KeyPredicate<KeyIn> predicate );
 
     protected abstract Map<Integer, Object> invokeTasks( boolean distributableReducer )
         throws Exception;
