@@ -117,34 +117,9 @@ public class IListNodeMapReduceTaskImpl<KeyIn, ValueIn, KeyOut, ValueOut>
         @Override
         public void run()
         {
-            OperationService os = nodeEngine.getOperationService();
-            Reducer r = isDistributableReducer() ? reducer : null;
-            IListMapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut> operation;
-            operation = new IListMapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>( name, mapper, r );
-            operation.setNodeEngine( nodeEngine ).setCallerUuid( nodeEngine.getLocalMember().getUuid() );
             try
             {
-                Map<Integer, Object> responses;
-                if ( keys != null )
-                {
-                    PartitionService ps = nodeEngine.getPartitionService();
-                    Set<Integer> partitions = new HashSet<Integer>();
-                    for ( KeyIn key : keys )
-                    {
-                        partitions.add( ps.getPartitionId( key ) );
-                    }
-                    responses =
-                        os.invokeOnPartitions( MapService.SERVICE_NAME, new BinaryOperationFactory( operation,
-                                                                                                    nodeEngine ),
-                                               partitions );
-                }
-                else
-                {
-                    responses =
-                        os.invokeOnAllPartitions( MapService.SERVICE_NAME, new BinaryOperationFactory( operation,
-                                                                                                       nodeEngine ) );
-                }
-
+                Map<Integer, Object> responses = invokeTasks( isDistributableReducer() );
                 Map groupedResponses = groupResponsesByKey( responses );
                 Map reducedResults = finalReduceStep( groupedResponses );
                 if ( collator == null )

@@ -194,8 +194,7 @@ public class ClientMapReduceTest
 
         MapReduceTaskFactory factory = MapReduceTaskFactory.newInstance( client );
         MapReduceTask<Integer, Integer, String, Integer> task = factory.build( m1 );
-        int result =
-            task.onKeys( Arrays.asList( new Integer[] { 50 } ) ).mapper( new TestMapper() ).submit( new GroupingTestCollator() );
+        int result = task.onKeys( 50 ).mapper( new TestMapper() ).submit( new GroupingTestCollator() );
 
         assertEquals( 50, result );
 
@@ -280,6 +279,53 @@ public class ClientMapReduceTest
         semaphore.acquire();
 
         assertEquals( 100, listenerResults.size() );
+        for ( List<Integer> value : listenerResults.values() )
+        {
+            assertEquals( 1, value.size() );
+        }
+
+        Set<String> hazelcastNames = context.getHazelcastNames();
+        assertEquals( 0, hazelcastNames.size() );
+    }
+
+    @Test( timeout = 20000 )
+    public void testKeyedAsyncMapper()
+        throws Exception
+    {
+        Config config = buildConfig();
+        CountingManagedContext context = (CountingManagedContext) config.getManagedContext();
+
+        HazelcastInstance h1 = Hazelcast.newHazelcastInstance( config );
+        HazelcastInstance h2 = Hazelcast.newHazelcastInstance( config );
+        HazelcastInstance h3 = Hazelcast.newHazelcastInstance( config );
+
+        HazelcastInstance client = HazelcastClient.newHazelcastClient( null );
+        IMap<Integer, Integer> m1 = client.getMap( MAP_NAME );
+        for ( int i = 0; i < 100; i++ )
+        {
+            m1.put( i, i );
+        }
+
+        final Map<String, List<Integer>> listenerResults = new HashMap<String, List<Integer>>();
+        final Semaphore semaphore = new Semaphore( 1 );
+        semaphore.acquire();
+
+        MapReduceTaskFactory factory = MapReduceTaskFactory.newInstance( client );
+        MapReduceTask<Integer, Integer, String, Integer> task = factory.build( m1 );
+        task.onKeys( 50 ).mapper( new TestMapper() ).submitAsync( new MapReduceListener<String, List<Integer>>()
+        {
+
+            @Override
+            public void onCompletion( Map<String, List<Integer>> reducedResults )
+            {
+                listenerResults.putAll( reducedResults );
+                semaphore.release();
+            }
+        } );
+
+        semaphore.acquire();
+
+        assertEquals( 1, listenerResults.size() );
         for ( List<Integer> value : listenerResults.values() )
         {
             assertEquals( 1, value.size() );

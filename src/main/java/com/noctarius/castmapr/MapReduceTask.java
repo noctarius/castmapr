@@ -44,7 +44,6 @@ import com.noctarius.castmapr.spi.Reducer;
  * MapReduceTask<Integer, Integer, String, Integer> task = factory.build( map );
  * Map<String, Integer> results = task.mapper( buildMapper() ).reducer( buildReducer() ).submit();
  * </pre>
- * 
  * </p>
  * 
  * @author noctarius
@@ -75,6 +74,22 @@ public interface MapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut>
      */
     ReducingMapReduceTask<KeyOut, ValueOut, KeyOut, ValueOut> reducer( Reducer<KeyOut, ValueOut> reducer );
 
+    /**
+     * Defines keys to execute the mapper and a possibly defined reducer against. If keys are known before submitting
+     * the task setting them can improve execution speed.
+     * 
+     * @param keys The keys to be executed against
+     * @return The instance of this MapReduceTask with generics changed on usage
+     */
     MapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut> onKeys( Iterable<KeyIn> keys );
+
+    /**
+     * Defines keys to execute the mapper and a possibly defined reducer against. If keys are known before submitting
+     * the task setting them can improve execution speed.
+     * 
+     * @param keys The keys to be executed against
+     * @return The instance of this MapReduceTask with generics changed on usage
+     */
+    MapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut> onKeys( KeyIn... keys );
 
 }

@@ -122,32 +122,16 @@ public class MultiMapNodeMapReduceTaskImpl<KeyIn, ValueIn, KeyOut, ValueOut>
         @Override
         public void run()
         {
-            OperationService os = nodeEngine.getOperationService();
-            Reducer r = isDistributableReducer() ? reducer : null;
-            MultiMapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut> operation;
-            operation = new MultiMapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>( name, mapper, r, null );
-            operation.setNodeEngine( nodeEngine ).setCallerUuid( nodeEngine.getLocalMember().getUuid() );
             try
             {
                 Map<Integer, Object> responses;
                 if ( keys != null )
                 {
-                    PartitionService ps = nodeEngine.getPartitionService();
-                    Set<Integer> partitions = new HashSet<Integer>();
-                    for ( KeyIn key : keys )
-                    {
-                        partitions.add( ps.getPartitionId( key ) );
-                    }
-                    responses =
-                        os.invokeOnPartitions( MapService.SERVICE_NAME, new BinaryOperationFactory( operation,
-                                                                                                    nodeEngine ),
-                                               partitions );
+                    responses = invokeTasks( keys, isDistributableReducer() );
                 }
                 else
                 {
-                    responses =
-                        os.invokeOnAllPartitions( MapService.SERVICE_NAME, new BinaryOperationFactory( operation,
-                                                                                                       nodeEngine ) );
+                    responses = invokeTasks( isDistributableReducer() );
                 }
 
                 Map groupedResponses = groupResponsesByKey( responses );

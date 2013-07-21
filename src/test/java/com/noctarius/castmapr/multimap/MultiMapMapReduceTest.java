@@ -16,6 +16,7 @@ package com.noctarius.castmapr.multimap;
 
 import static org.junit.Assert.assertEquals;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -96,6 +97,38 @@ public class MultiMapMapReduceTest
         MapReduceTask<Integer, Integer, String, Integer> task = factory.build( m1 );
         Map<String, List<Integer>> result = task.mapper( new TestMapper() ).submit();
         assertEquals( 4, result.size() );
+        for ( List<Integer> value : result.values() )
+        {
+            assertEquals( 25, value.size() );
+        }
+
+        Set<String> hazelcastNames = context.getHazelcastNames();
+        assertEquals( 0, hazelcastNames.size() );
+    }
+
+    @Test( timeout = 20000 )
+    public void testKeyedMultiMapMapper()
+        throws Exception
+    {
+        TestHazelcastInstanceFactory nodeFactory = createHazelcastInstanceFactory( 4 );
+        final CountingManagedContext context = new CountingManagedContext();
+        final Config config = new Config();
+        config.setManagedContext( context );
+
+        HazelcastInstance h1 = nodeFactory.newHazelcastInstance( config );
+        HazelcastInstance h2 = nodeFactory.newHazelcastInstance( config );
+        HazelcastInstance h3 = nodeFactory.newHazelcastInstance( config );
+
+        MultiMap<Integer, Integer> m1 = h1.getMultiMap( MULTI_MAP_NAME );
+        for ( int i = 0; i < 100; i++ )
+        {
+            m1.put( i % 4, i );
+        }
+
+        MapReduceTaskFactory factory = MapReduceTaskFactory.newInstance( h1 );
+        MapReduceTask<Integer, Integer, String, Integer> task = factory.build( m1 );
+        Map<String, List<Integer>> result = task.onKeys( 0 ).mapper( new TestMapper() ).submit();
+        assertEquals( 1, result.size() );
         for ( List<Integer> value : result.values() )
         {
             assertEquals( 25, value.size() );
@@ -219,6 +252,38 @@ public class MultiMapMapReduceTest
     }
 
     @Test( timeout = 20000 )
+    public void testKeyedClientMultiMapMapper()
+        throws Exception
+    {
+        final CountingManagedContext context = new CountingManagedContext();
+        final Config config = new Config();
+        config.setManagedContext( context );
+
+        HazelcastInstance h1 = Hazelcast.newHazelcastInstance( config );
+        HazelcastInstance h2 = Hazelcast.newHazelcastInstance( config );
+        HazelcastInstance h3 = Hazelcast.newHazelcastInstance( config );
+
+        HazelcastInstance client = HazelcastClient.newHazelcastClient( null );
+        MultiMap<Integer, Integer> m1 = client.getMultiMap( MULTI_MAP_NAME );
+        for ( int i = 0; i < 100; i++ )
+        {
+            m1.put( i % 4, i );
+        }
+
+        MapReduceTaskFactory factory = MapReduceTaskFactory.newInstance( client );
+        MapReduceTask<Integer, Integer, String, Integer> task = factory.build( m1 );
+        Map<String, List<Integer>> result = task.onKeys( 0 ).mapper( new TestMapper() ).submit();
+        assertEquals( 1, result.size() );
+        for ( List<Integer> value : result.values() )
+        {
+            assertEquals( 25, value.size() );
+        }
+
+        Set<String> hazelcastNames = context.getHazelcastNames();
+        assertEquals( 0, hazelcastNames.size() );
+    }
+
+    @Test( timeout = 20000 )
     public void testAsyncMultiMapMapper()
         throws Exception
     {
@@ -257,6 +322,54 @@ public class MultiMapMapReduceTest
         semaphore.acquire();
 
         assertEquals( 4, listenerResults.size() );
+        for ( List<Integer> value : listenerResults.values() )
+        {
+            assertEquals( 25, value.size() );
+        }
+
+        Set<String> hazelcastNames = context.getHazelcastNames();
+        assertEquals( 0, hazelcastNames.size() );
+    }
+
+    @Test( timeout = 20000 )
+    public void testKeyedAsyncMultiMapMapper()
+        throws Exception
+    {
+        TestHazelcastInstanceFactory nodeFactory = createHazelcastInstanceFactory( 4 );
+        final CountingManagedContext context = new CountingManagedContext();
+        final Config config = new Config();
+        config.setManagedContext( context );
+
+        HazelcastInstance h1 = nodeFactory.newHazelcastInstance( config );
+        HazelcastInstance h2 = nodeFactory.newHazelcastInstance( config );
+        HazelcastInstance h3 = nodeFactory.newHazelcastInstance( config );
+
+        MultiMap<Integer, Integer> m1 = h1.getMultiMap( MULTI_MAP_NAME );
+        for ( int i = 0; i < 100; i++ )
+        {
+            m1.put( i % 4, i );
+        }
+
+        final Map<String, List<Integer>> listenerResults = new HashMap<String, List<Integer>>();
+        final Semaphore semaphore = new Semaphore( 1 );
+        semaphore.acquire();
+
+        MapReduceTaskFactory factory = MapReduceTaskFactory.newInstance( h1 );
+        MapReduceTask<Integer, Integer, String, Integer> task = factory.build( m1 );
+        task.onKeys( 0 ).mapper( new TestMapper() ).submitAsync( new MapReduceListener<String, List<Integer>>()
+        {
+
+            @Override
+            public void onCompletion( Map<String, List<Integer>> reducedResults )
+            {
+                listenerResults.putAll( reducedResults );
+                semaphore.release();
+            }
+        } );
+
+        semaphore.acquire();
+
+        assertEquals( 1, listenerResults.size() );
         for ( List<Integer> value : listenerResults.values() )
         {
             assertEquals( 25, value.size() );

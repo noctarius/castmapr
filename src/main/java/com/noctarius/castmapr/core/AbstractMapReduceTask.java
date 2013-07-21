@@ -17,6 +17,7 @@ package com.noctarius.castmapr.core;
 import static com.noctarius.castmapr.core.MapReduceUtils.copyKeys;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -62,6 +63,13 @@ public abstract class AbstractMapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut>
     public MapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut> onKeys( Iterable<KeyIn> keys )
     {
         this.keys = keys;
+        return this;
+    }
+
+    @Override
+    public MapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut> onKeys( KeyIn... keys )
+    {
+        this.keys = Arrays.asList( keys );
         return this;
     }
 
