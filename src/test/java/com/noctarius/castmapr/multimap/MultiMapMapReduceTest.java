@@ -74,7 +74,7 @@ public class MultiMapMapReduceTest
         Hazelcast.shutdownAll();
     }
 
-    @Test( timeout = 20000 )
+    @Test( timeout = 30000 )
     public void testMultiMapMapper()
         throws Exception
     {
@@ -106,7 +106,7 @@ public class MultiMapMapReduceTest
         assertEquals( 0, hazelcastNames.size() );
     }
 
-    @Test( timeout = 20000 )
+    @Test( timeout = 30000 )
     public void testKeyedMultiMapMapper()
         throws Exception
     {
@@ -138,7 +138,7 @@ public class MultiMapMapReduceTest
         assertEquals( 0, hazelcastNames.size() );
     }
 
-    @Test( timeout = 20000 )
+    @Test( timeout = 30000 )
     public void testMultiMapMapperReducer()
         throws Exception
     {
@@ -178,7 +178,7 @@ public class MultiMapMapReduceTest
         assertEquals( 0, hazelcastNames.size() );
     }
 
-    @Test( timeout = 20000 )
+    @Test( timeout = 30000 )
     public void testMultiMapMapperDistributedReducer()
         throws Exception
     {
@@ -219,7 +219,7 @@ public class MultiMapMapReduceTest
         assertEquals( 0, hazelcastNames.size() );
     }
 
-    @Test( timeout = 20000 )
+    @Test( timeout = 30000 )
     public void testClientMultiMapMapper()
         throws Exception
     {
@@ -251,7 +251,7 @@ public class MultiMapMapReduceTest
         assertEquals( 0, hazelcastNames.size() );
     }
 
-    @Test( timeout = 20000 )
+    @Test( timeout = 30000 )
     public void testKeyedClientMultiMapMapper()
         throws Exception
     {
@@ -283,7 +283,7 @@ public class MultiMapMapReduceTest
         assertEquals( 0, hazelcastNames.size() );
     }
 
-    @Test( timeout = 20000 )
+    @Test( timeout = 30000 )
     public void testAsyncMultiMapMapper()
         throws Exception
     {
@@ -331,7 +331,7 @@ public class MultiMapMapReduceTest
         assertEquals( 0, hazelcastNames.size() );
     }
 
-    @Test( timeout = 20000 )
+    @Test( timeout = 30000 )
     public void testKeyedAsyncMultiMapMapper()
         throws Exception
     {
@@ -379,7 +379,7 @@ public class MultiMapMapReduceTest
         assertEquals( 0, hazelcastNames.size() );
     }
 
-    @Test( timeout = 20000 )
+    @Test( timeout = 30000 )
     public void testAsyncClientMultiMapMapper()
         throws Exception
     {

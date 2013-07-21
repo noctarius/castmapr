@@ -72,7 +72,7 @@ public class MapReduceTest
         Hazelcast.shutdownAll();
     }
 
-    @Test( timeout = 20000 )
+    @Test( timeout = 30000 )
     public void testMapper()
         throws Exception
     {
@@ -104,7 +104,7 @@ public class MapReduceTest
         assertEquals( 0, hazelcastNames.size() );
     }
 
-    @Test( timeout = 20000 )
+    @Test( timeout = 30000 )
     public void testKeyedMapperCollator()
         throws Exception
     {
@@ -133,7 +133,7 @@ public class MapReduceTest
         assertEquals( 0, hazelcastNames.size() );
     }
 
-    @Test( timeout = 20000 )
+    @Test( timeout = 30000 )
     public void testKeyPredicateMapperCollator()
         throws Exception
     {
@@ -170,7 +170,7 @@ public class MapReduceTest
         assertEquals( 0, hazelcastNames.size() );
     }
 
-    @Test( timeout = 20000 )
+    @Test( timeout = 30000 )
     public void testMapperComplexMapping()
         throws Exception
     {
@@ -199,7 +199,7 @@ public class MapReduceTest
         assertEquals( 0, hazelcastNames.size() );
     }
 
-    @Test( timeout = 20000 )
+    @Test( timeout = 30000 )
     public void testMapperReducer()
         throws Exception
     {
@@ -240,7 +240,7 @@ public class MapReduceTest
         assertEquals( 1, hazelcastNames.size() );
     }
 
-    @Test( timeout = 20000 )
+    @Test( timeout = 30000 )
     public void testMapperCollator()
         throws Exception
     {
@@ -279,7 +279,7 @@ public class MapReduceTest
         assertEquals( 0, hazelcastNames.size() );
     }
 
-    @Test( timeout = 20000 )
+    @Test( timeout = 30000 )
     public void testMapperReducerCollator()
         throws Exception
     {
@@ -319,7 +319,7 @@ public class MapReduceTest
         assertEquals( 1, hazelcastNames.size() );
     }
 
-    @Test( timeout = 20000 )
+    @Test( timeout = 30000 )
     public void testAsyncMapper()
         throws Exception
     {
@@ -367,7 +367,7 @@ public class MapReduceTest
         assertEquals( 0, hazelcastNames.size() );
     }
 
-    @Test( timeout = 20000 )
+    @Test( timeout = 30000 )
     public void testKeyedAsyncMapper()
         throws Exception
     {
@@ -415,7 +415,7 @@ public class MapReduceTest
         assertEquals( 0, hazelcastNames.size() );
     }
 
-    @Test( timeout = 20000 )
+    @Test( timeout = 30000 )
     public void testAsyncMapperReducer()
         throws Exception
     {
@@ -471,7 +471,7 @@ public class MapReduceTest
         assertEquals( 1, hazelcastNames.size() );
     }
 
-    @Test( timeout = 20000 )
+    @Test( timeout = 30000 )
     public void testAsyncMapperCollator()
         throws Exception
     {
@@ -526,7 +526,7 @@ public class MapReduceTest
         assertEquals( 0, hazelcastNames.size() );
     }
 
-    @Test( timeout = 20000 )
+    @Test( timeout = 30000 )
     public void testAsyncMapperReducerCollator()
         throws Exception
     {

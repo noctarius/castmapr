@@ -68,7 +68,7 @@ public class DistributedMapperMapReduceTest
         Hazelcast.shutdownAll();
     }
 
-    @Test( timeout = 20000 )
+    @Test( timeout = 30000 )
     public void testMapperReducer()
         throws Exception
     {
@@ -109,7 +109,7 @@ public class DistributedMapperMapReduceTest
         assertEquals( 3, hazelcastNames.size() );
     }
 
-    @Test( timeout = 20000 )
+    @Test( timeout = 30000 )
     public void testMapperReducerInterface()
         throws Exception
     {
@@ -150,7 +150,7 @@ public class DistributedMapperMapReduceTest
         assertEquals( 3, hazelcastNames.size() );
     }
 
-    @Test( timeout = 20000 )
+    @Test( timeout = 30000 )
     public void testMapperReducerCollator()
         throws Exception
     {
@@ -190,7 +190,7 @@ public class DistributedMapperMapReduceTest
         assertEquals( 3, hazelcastNames.size() );
     }
 
-    @Test( timeout = 20000 )
+    @Test( timeout = 30000 )
     public void testMapperReducerCollatorInterface()
         throws Exception
     {
@@ -230,7 +230,7 @@ public class DistributedMapperMapReduceTest
         assertEquals( 3, hazelcastNames.size() );
     }
 
-    @Test( timeout = 20000 )
+    @Test( timeout = 30000 )
     public void testAsyncMapperReducer()
         throws Exception
     {
@@ -286,7 +286,7 @@ public class DistributedMapperMapReduceTest
         assertEquals( 3, hazelcastNames.size() );
     }
 
-    @Test( timeout = 20000 )
+    @Test( timeout = 30000 )
     public void testAsyncMapperReducerInterface()
         throws Exception
     {
@@ -342,7 +342,7 @@ public class DistributedMapperMapReduceTest
         assertEquals( 3, hazelcastNames.size() );
     }
 
-    @Test( timeout = 20000 )
+    @Test( timeout = 30000 )
     public void testAsyncMapperReducerCollator()
         throws Exception
     {
@@ -397,7 +397,7 @@ public class DistributedMapperMapReduceTest
         assertEquals( 3, hazelcastNames.size() );
     }
 
-    @Test( timeout = 20000 )
+    @Test( timeout = 30000 )
     public void testAsyncMapperReducerCollatorInterface()
         throws Exception
     {

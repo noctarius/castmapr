@@ -75,7 +75,7 @@ public class IListMapReduceTest
         Hazelcast.shutdownAll();
     }
 
-    @Test( timeout = 20000 )
+    @Test( timeout = 30000 )
     public void testListMapper()
         throws Exception
     {
@@ -107,7 +107,7 @@ public class IListMapReduceTest
         assertEquals( 0, hazelcastNames.size() );
     }
 
-    @Test( timeout = 20000 )
+    @Test( timeout = 30000 )
     public void testListMapperReducer()
         throws Exception
     {
@@ -142,7 +142,7 @@ public class IListMapReduceTest
         assertEquals( 0, hazelcastNames.size() );
     }
 
-    @Test( timeout = 20000 )
+    @Test( timeout = 30000 )
     public void testListMapperDistributedReducer()
         throws Exception
     {
@@ -178,7 +178,7 @@ public class IListMapReduceTest
         assertEquals( 0, hazelcastNames.size() );
     }
 
-    @Test( timeout = 20000 )
+    @Test( timeout = 30000 )
     public void testClientListMapper()
         throws Exception
     {
@@ -210,7 +210,7 @@ public class IListMapReduceTest
         assertEquals( 0, hazelcastNames.size() );
     }
 
-    @Test( timeout = 20000 )
+    @Test( timeout = 30000 )
     public void testAsyncListMapper()
         throws Exception
     {
@@ -258,7 +258,7 @@ public class IListMapReduceTest
         assertEquals( 0, hazelcastNames.size() );
     }
 
-    @Test( timeout = 20000 )
+    @Test( timeout = 30000 )
     public void testAsyncClientListMapper()
         throws Exception
     {
