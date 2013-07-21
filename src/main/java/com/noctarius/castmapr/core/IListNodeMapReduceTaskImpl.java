@@ -26,6 +26,7 @@ import com.hazelcast.spi.NodeEngine;
 import com.hazelcast.spi.OperationService;
 import com.hazelcast.spi.impl.BinaryOperationFactory;
 import com.hazelcast.util.ExceptionUtil;
+import com.noctarius.castmapr.MapReduceTask;
 import com.noctarius.castmapr.core.operation.IListMapReduceOperation;
 import com.noctarius.castmapr.spi.Collator;
 import com.noctarius.castmapr.spi.MapReduceCollatorListener;
@@ -42,6 +43,24 @@ public class IListNodeMapReduceTaskImpl<KeyIn, ValueIn, KeyOut, ValueOut>
     {
         super( name, hazelcastInstance );
         this.nodeEngine = nodeEngine;
+    }
+
+    /**
+     * @throws UnsupportedOperationException IList MapReduce tasks do not support keys
+     */
+    @Override
+    public MapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut> onKeys( Iterable<KeyIn> keys )
+    {
+        throw new UnsupportedOperationException( "IList MapReduce tasks do not support keys" );
+    }
+
+    /**
+     * @throws UnsupportedOperationException IList MapReduce tasks do not support keys
+     */
+    @Override
+    public MapReduceTask<KeyIn, ValueIn, KeyOut, ValueOut> onKeys( KeyIn... keys )
+    {
+        throw new UnsupportedOperationException( "IList MapReduce tasks do not support keys" );
     }
 
     @Override
