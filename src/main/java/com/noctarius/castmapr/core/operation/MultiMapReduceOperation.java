@@ -1,6 +1,5 @@
 package com.noctarius.castmapr.core.operation;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -13,14 +12,9 @@ import com.hazelcast.collection.CollectionProxyType;
 import com.hazelcast.collection.CollectionRecord;
 import com.hazelcast.collection.CollectionService;
 import com.hazelcast.collection.CollectionWrapper;
-import com.hazelcast.collection.list.ObjectListProxy;
 import com.hazelcast.core.MultiMap;
-import com.hazelcast.nio.ObjectDataInput;
-import com.hazelcast.nio.ObjectDataOutput;
 import com.hazelcast.nio.serialization.Data;
-import com.hazelcast.spi.PartitionAwareOperation;
 import com.hazelcast.spi.ProxyService;
-import com.hazelcast.spi.impl.AbstractNamedOperation;
 import com.hazelcast.spi.impl.NodeEngineImpl;
 import com.noctarius.castmapr.core.CollectorImpl;
 import com.noctarius.castmapr.spi.Mapper;
@@ -29,26 +23,17 @@ import com.noctarius.castmapr.spi.PartitionIdAware;
 import com.noctarius.castmapr.spi.Reducer;
 
 public class MultiMapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>
-    extends AbstractNamedOperation
-    implements PartitionAwareOperation
+    extends AbstractMapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>
 {
-
-    private Mapper<KeyIn, ValueIn, KeyOut, ValueOut> mapper;
-
-    private Reducer<KeyOut, ValueOut> reducer;
-
-    private transient Object response;
 
     public MultiMapReduceOperation()
     {
     }
 
     public MultiMapReduceOperation( String name, Mapper<KeyIn, ValueIn, KeyOut, ValueOut> mapper,
-                                       Reducer<KeyOut, ValueOut> reducer )
+                                    Reducer<KeyOut, ValueOut> reducer, List<KeyIn> keys )
     {
-        super( name );
-        this.mapper = mapper;
-        this.reducer = reducer;
+        super( name, mapper, reducer, keys );
     }
 
     @Override
@@ -74,15 +59,40 @@ public class MultiMapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>
         CollectorImpl<KeyOut, ValueOut> collector = new CollectorImpl<KeyOut, ValueOut>();
 
         mapper.initialize( collector );
-        for ( Data dataKey : container.keySet() )
+        // Without defined keys iterate all keys
+        if ( keys.size() == 0 )
         {
-            KeyIn key = (KeyIn) getNodeEngine().toObject( dataKey );
-            CollectionWrapper collectionWrapper = container.getCollectionWrapper( dataKey );
-            Collection<CollectionRecord> collection = collectionWrapper.getCollection();
-            for ( CollectionRecord record : collection )
+            for ( Data dataKey : container.keySet() )
             {
-                ValueIn value = (ValueIn) getNodeEngine().toObject( record.getObject() );
-                mapper.map( key, value, collector );
+                KeyIn key = (KeyIn) getNodeEngine().toObject( dataKey );
+                CollectionWrapper collectionWrapper = container.getCollectionWrapper( dataKey );
+                if ( collectionWrapper != null )
+                {
+                    Collection<CollectionRecord> collection = collectionWrapper.getCollection();
+                    for ( CollectionRecord record : collection )
+                    {
+                        ValueIn value = (ValueIn) getNodeEngine().toObject( record.getObject() );
+                        mapper.map( key, value, collector );
+                    }
+                }
+            }
+        }
+        else
+        {
+            // Iterate only defined keys
+            for ( KeyIn key : keys )
+            {
+                Data dataKey = getNodeEngine().toData( key );
+                CollectionWrapper collectionWrapper = container.getCollectionWrapper( dataKey );
+                if ( collectionWrapper != null )
+                {
+                    Collection<CollectionRecord> collection = collectionWrapper.getCollection();
+                    for ( CollectionRecord record : collection )
+                    {
+                        ValueIn value = (ValueIn) getNodeEngine().toObject( record.getObject() );
+                        mapper.map( key, value, collector );
+                    }
+                }
             }
         }
         mapper.finalized( collector );
@@ -108,36 +118,6 @@ public class MultiMapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>
         {
             response = collector.emitted;
         }
-    }
-
-    @Override
-    public Object getResponse()
-    {
-        return response;
-    }
-
-    @Override
-    protected void writeInternal( ObjectDataOutput out )
-        throws IOException
-    {
-        super.writeInternal( out );
-        out.writeObject( mapper );
-        out.writeObject( reducer );
-    }
-
-    @Override
-    protected void readInternal( ObjectDataInput in )
-        throws IOException
-    {
-        super.readInternal( in );
-        mapper = in.readObject();
-        reducer = in.readObject();
-    }
-
-    @Override
-    public boolean returnsResponse()
-    {
-        return true;
     }
 
     private MultiMap<KeyIn, ValueIn> getMultiMap( ProxyService proxyService )

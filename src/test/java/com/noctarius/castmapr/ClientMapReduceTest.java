@@ -168,11 +168,7 @@ public class ClientMapReduceTest
             expectedResult += i;
         }
 
-        for ( int i = 0; i < 4; i++ )
-        {
-            assertEquals( expectedResult, result );
-        }
-
+        assertEquals( expectedResult, result );
         Set<String> hazelcastNames = context.getHazelcastNames();
         assertEquals( 0, hazelcastNames.size() );
     }

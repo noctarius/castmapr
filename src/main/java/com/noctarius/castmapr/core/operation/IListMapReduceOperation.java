@@ -14,7 +14,6 @@
 
 package com.noctarius.castmapr.core.operation;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -29,12 +28,8 @@ import com.hazelcast.collection.CollectionService;
 import com.hazelcast.collection.CollectionWrapper;
 import com.hazelcast.collection.list.ObjectListProxy;
 import com.hazelcast.core.IList;
-import com.hazelcast.nio.ObjectDataInput;
-import com.hazelcast.nio.ObjectDataOutput;
 import com.hazelcast.nio.serialization.Data;
-import com.hazelcast.spi.PartitionAwareOperation;
 import com.hazelcast.spi.ProxyService;
-import com.hazelcast.spi.impl.AbstractNamedOperation;
 import com.hazelcast.spi.impl.NodeEngineImpl;
 import com.noctarius.castmapr.core.CollectorImpl;
 import com.noctarius.castmapr.spi.IListAware;
@@ -43,15 +38,8 @@ import com.noctarius.castmapr.spi.PartitionIdAware;
 import com.noctarius.castmapr.spi.Reducer;
 
 public class IListMapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>
-    extends AbstractNamedOperation
-    implements PartitionAwareOperation
+    extends AbstractMapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>
 {
-
-    private Mapper<KeyIn, ValueIn, KeyOut, ValueOut> mapper;
-
-    private Reducer<KeyOut, ValueOut> reducer;
-
-    private transient Object response;
 
     public IListMapReduceOperation()
     {
@@ -60,9 +48,7 @@ public class IListMapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>
     public IListMapReduceOperation( String name, Mapper<KeyIn, ValueIn, KeyOut, ValueOut> mapper,
                                     Reducer<KeyOut, ValueOut> reducer )
     {
-        super( name );
-        this.mapper = mapper;
-        this.reducer = reducer;
+        super( name, mapper, reducer, null );
     }
 
     @Override
@@ -120,36 +106,6 @@ public class IListMapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>
         {
             response = collector.emitted;
         }
-    }
-
-    @Override
-    public boolean returnsResponse()
-    {
-        return true;
-    }
-
-    @Override
-    public Object getResponse()
-    {
-        return response;
-    }
-
-    @Override
-    protected void writeInternal( ObjectDataOutput out )
-        throws IOException
-    {
-        super.writeInternal( out );
-        out.writeObject( mapper );
-        out.writeObject( reducer );
-    }
-
-    @Override
-    protected void readInternal( ObjectDataInput in )
-        throws IOException
-    {
-        super.readInternal( in );
-        mapper = in.readObject();
-        reducer = in.readObject();
     }
 
     private IList<ValueIn> getList( ProxyService proxyService )

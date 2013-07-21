@@ -16,6 +16,7 @@ package com.noctarius.castmapr;
 
 import static org.junit.Assert.assertEquals;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -29,6 +30,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
+import com.hazelcast.client.HazelcastClient;
 import com.hazelcast.config.Config;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
@@ -38,6 +40,9 @@ import com.hazelcast.test.TestHazelcastInstanceFactory;
 import com.hazelcast.test.annotation.SerialTest;
 import com.noctarius.castmapr.MapReduceTask;
 import com.noctarius.castmapr.MapReduceTaskFactory;
+import com.noctarius.castmapr.AbstractMapReduceTaskTest.CountingManagedContext;
+import com.noctarius.castmapr.ClientMapReduceTest.GroupingTestCollator;
+import com.noctarius.castmapr.ClientMapReduceTest.TestMapper;
 import com.noctarius.castmapr.spi.Collator;
 import com.noctarius.castmapr.spi.Collector;
 import com.noctarius.castmapr.spi.MapReduceCollatorListener;
@@ -93,6 +98,37 @@ public class MapReduceTest
         {
             assertEquals( 1, value.size() );
         }
+
+        Set<String> hazelcastNames = context.getHazelcastNames();
+        assertEquals( 0, hazelcastNames.size() );
+    }
+
+    @Test
+    // ( timeout = 20000 )
+    public void testKeyedMapperCollator()
+        throws Exception
+    {
+        TestHazelcastInstanceFactory nodeFactory = createHazelcastInstanceFactory( 4 );
+        final CountingManagedContext context = new CountingManagedContext();
+        final Config config = new Config();
+        config.setManagedContext( context );
+
+        HazelcastInstance h1 = nodeFactory.newHazelcastInstance( config );
+        HazelcastInstance h2 = nodeFactory.newHazelcastInstance( config );
+        HazelcastInstance h3 = nodeFactory.newHazelcastInstance( config );
+
+        IMap<Integer, Integer> m1 = h1.getMap( MAP_NAME );
+        for ( int i = 0; i < 10000; i++ )
+        {
+            m1.put( i, i );
+        }
+
+        MapReduceTaskFactory factory = MapReduceTaskFactory.newInstance( h1 );
+        MapReduceTask<Integer, Integer, String, Integer> task = factory.build( m1 );
+        int result =
+            task.onKeys( Arrays.asList( new Integer[] { 50 } ) ).mapper( new TestMapper() ).submit( new GroupingTestCollator() );
+
+        assertEquals( 50, result );
 
         Set<String> hazelcastNames = context.getHazelcastNames();
         assertEquals( 0, hazelcastNames.size() );

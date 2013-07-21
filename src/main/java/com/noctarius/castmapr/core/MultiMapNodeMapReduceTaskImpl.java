@@ -14,7 +14,10 @@
 
 package com.noctarius.castmapr.core;
 
+import static com.noctarius.castmapr.core.MapReduceUtils.copyKeys;
+
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -52,7 +55,9 @@ public class MultiMapNodeMapReduceTaskImpl<KeyIn, ValueIn, KeyOut, ValueOut>
 
         Reducer r = distributableReducer ? reducer : null;
         MultiMapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut> operation;
-        operation = new MultiMapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>( name, mapper, r );
+        operation =
+            new MultiMapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>( name, mapper, r,
+                                                                           (List<KeyIn>) copyKeys( keys ) );
         operation.setNodeEngine( nodeEngine ).setCallerUuid( nodeEngine.getLocalMember().getUuid() );
         PartitionService ps = nodeEngine.getPartitionService();
         Set<Integer> partitions = new HashSet<Integer>();
@@ -72,7 +77,7 @@ public class MultiMapNodeMapReduceTaskImpl<KeyIn, ValueIn, KeyOut, ValueOut>
 
         Reducer r = distributableReducer ? reducer : null;
         MultiMapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut> operation;
-        operation = new MultiMapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>( name, mapper, r );
+        operation = new MultiMapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>( name, mapper, r, null );
         operation.setNodeEngine( nodeEngine ).setCallerUuid( nodeEngine.getLocalMember().getUuid() );
         return os.invokeOnAllPartitions( MapService.SERVICE_NAME, new BinaryOperationFactory( operation, nodeEngine ) );
     }
@@ -120,7 +125,7 @@ public class MultiMapNodeMapReduceTaskImpl<KeyIn, ValueIn, KeyOut, ValueOut>
             OperationService os = nodeEngine.getOperationService();
             Reducer r = isDistributableReducer() ? reducer : null;
             MultiMapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut> operation;
-            operation = new MultiMapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>( name, mapper, r );
+            operation = new MultiMapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>( name, mapper, r, null );
             operation.setNodeEngine( nodeEngine ).setCallerUuid( nodeEngine.getLocalMember().getUuid() );
             try
             {

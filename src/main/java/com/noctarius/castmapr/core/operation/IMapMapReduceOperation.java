@@ -14,22 +14,19 @@
 
 package com.noctarius.castmapr.core.operation;
 
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import com.hazelcast.core.IMap;
+import com.hazelcast.map.MapContainer;
 import com.hazelcast.map.MapService;
 import com.hazelcast.map.RecordStore;
-import com.hazelcast.map.operation.AbstractMapOperation;
-import com.hazelcast.nio.ObjectDataInput;
-import com.hazelcast.nio.ObjectDataOutput;
 import com.hazelcast.nio.serialization.Data;
-import com.hazelcast.spi.PartitionAwareOperation;
+import com.hazelcast.spi.BackupOperation;
 import com.hazelcast.spi.ProxyService;
+import com.hazelcast.spi.exception.RetryableHazelcastException;
 import com.noctarius.castmapr.core.CollectorImpl;
 import com.noctarius.castmapr.spi.MapAware;
 import com.noctarius.castmapr.spi.Mapper;
@@ -37,17 +34,12 @@ import com.noctarius.castmapr.spi.PartitionIdAware;
 import com.noctarius.castmapr.spi.Reducer;
 
 public class IMapMapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>
-    extends AbstractMapOperation
-    implements PartitionAwareOperation
+    extends AbstractMapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>
 {
 
-    private Mapper<KeyIn, ValueIn, KeyOut, ValueOut> mapper;
+    protected transient MapService mapService;
 
-    private Reducer<KeyOut, ValueOut> reducer;
-
-    private List<KeyIn> keys;
-
-    private transient Object response;
+    protected transient MapContainer mapContainer;
 
     public IMapMapReduceOperation()
     {
@@ -56,10 +48,19 @@ public class IMapMapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>
     public IMapMapReduceOperation( String name, Mapper<KeyIn, ValueIn, KeyOut, ValueOut> mapper,
                                    Reducer<KeyOut, ValueOut> reducer, List<KeyIn> keys )
     {
-        super( name );
-        this.mapper = mapper;
-        this.reducer = reducer;
-        this.keys = keys;
+        super( name, mapper, reducer, keys );
+    }
+
+    @Override
+    public void beforeRun()
+        throws Exception
+    {
+        mapService = getService();
+        mapContainer = mapService.getMapContainer( name );
+        if ( !( this instanceof BackupOperation ) && !mapContainer.isMapReady() )
+        {
+            throw new RetryableHazelcastException( "Map is not ready." );
+        }
     }
 
     @Override
@@ -125,41 +126,6 @@ public class IMapMapReduceOperation<KeyIn, ValueIn, KeyOut, ValueOut>
         else
         {
             response = collector.emitted;
-        }
-    }
-
-    @Override
-    public Object getResponse()
-    {
-        return response;
-    }
-
-    @Override
-    protected void writeInternal( ObjectDataOutput out )
-        throws IOException
-    {
-        super.writeInternal( out );
-        out.writeObject( mapper );
-        out.writeObject( reducer );
-        out.writeInt( keys == null ? 0 : keys.size() );
-        for ( KeyIn key : keys )
-        {
-            out.writeObject( key );
-        }
-    }
-
-    @Override
-    protected void readInternal( ObjectDataInput in )
-        throws IOException
-    {
-        super.readInternal( in );
-        mapper = in.readObject();
-        reducer = in.readObject();
-        int size = in.readInt();
-        keys = new ArrayList<KeyIn>( size );
-        for ( int i = 0; i < size; i++ )
-        {
-            keys.add( (KeyIn) in.readObject() );
         }
     }
 

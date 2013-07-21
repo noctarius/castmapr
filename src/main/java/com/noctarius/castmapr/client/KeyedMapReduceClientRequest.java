@@ -181,7 +181,6 @@ public class KeyedMapReduceClientRequest<KeyIn, ValueIn, KeyOut, ValueOut>
                     @Override
                     public Operation createOperation( int partitionId, List<KeyIn> keys )
                     {
-                        // TODO
                         return new IMapMapReduceOperation( name, mapper, reducer, keys );
                     }
                 };
@@ -192,8 +191,7 @@ public class KeyedMapReduceClientRequest<KeyIn, ValueIn, KeyOut, ValueOut>
                     @Override
                     public Operation createOperation( int partitionId, List<KeyIn> keys )
                     {
-                        // TODO
-                        return new MultiMapReduceOperation( name, mapper, reducer );
+                        return new MultiMapReduceOperation( name, mapper, reducer, keys );
                     }
                 };
             case IList:
@@ -203,7 +201,6 @@ public class KeyedMapReduceClientRequest<KeyIn, ValueIn, KeyOut, ValueOut>
                     @Override
                     public Operation createOperation( int partitionId, List<KeyIn> keys )
                     {
-                        // TODO
                         return new IListMapReduceOperation( name, mapper, reducer );
                     }
                 };
