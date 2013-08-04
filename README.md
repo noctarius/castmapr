@@ -24,13 +24,25 @@ CastMapR supports executing MapReduce tasks on IMap, IList and MultiMap whereas 
 
 # Adding CastMapR to your project
 
-If you use Maven there are snapshots in Sonatype OSS Maven repositories (and later on in Maven Central as well). Just add the following lines to you pom.xml:
+If you use Maven there are snapshots in Sonatype OSS Maven repositories and releases in Maven Central. Just add the following lines to you pom.xml:
+Latest Release:
 ```xml
 <dependencies>
   <dependency>
     <groupId>com.noctarius.castmapr</groupId>
     <artifactId>castmapr</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.0.0</version>
+  </dependency>
+</dependencies>
+```
+
+Latest Snapshot:
+```xml
+<dependencies>
+  <dependency>
+    <groupId>com.noctarius.castmapr</groupId>
+    <artifactId>castmapr</artifactId>
+    <version>1.1.0-SNAPSHOT</version>
   </dependency>
 </dependencies>
 <repositories>
