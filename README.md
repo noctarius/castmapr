@@ -1,4 +1,4 @@
-CastMapR
+CastMapR (Discontinued - see next section!)
 ========
 
 CastMapR - MapReduce for Hazelcast
