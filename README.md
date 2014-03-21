@@ -3,6 +3,10 @@ CastMapR
 
 CastMapR - MapReduce for Hazelcast
 
+# Please Note
+
+This project is discontinued in favor of the new MapReduce API integrated in Hazelcast 3.2. Please see the Hazelcast [documentation preview](https://docs.google.com/file/d/0B96T_cfRa_uxWU1vNFNCOHl2Rms) to find out on how to use the new API.
+
 # What is CastMapR
 
 CastMapR is a MapReduce implementation on top of Hazelcast 3. Currently it supports MapReduce algorithms on IMap, Multimap and IList.
