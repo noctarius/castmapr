@@ -5,7 +5,7 @@ CastMapR - MapReduce for Hazelcast
 
 # Please Note
 
-This project is discontinued in favor of the new MapReduce API integrated in Hazelcast 3.2. Please see the Hazelcast [documentation preview](https://docs.google.com/file/d/0B96T_cfRa_uxWU1vNFNCOHl2Rms) to find out on how to use the new API.
+This project is discontinued in favor of the new MapReduce API integrated in Hazelcast 3.2. Please see the Hazelcast [documentation](http://docs.hazelcast.org/docs/3.4/manual/html/mapreduce.html) to find out on how to use the new API.
 
 # What is CastMapR
 
