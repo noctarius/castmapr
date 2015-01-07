@@ -31,6 +31,7 @@ CastMapR supports executing MapReduce tasks on IMap, IList and MultiMap whereas 
 If you use Maven there are snapshots in Sonatype OSS Maven repositories and releases in Maven Central. Just add the following lines to you pom.xml:
 
 Latest Release:
+
 ```xml
 <dependencies>
   <dependency>
@@ -42,6 +43,7 @@ Latest Release:
 ```
 
 Latest Snapshot:
+
 ```xml
 <dependencies>
   <dependency>
@@ -92,6 +94,7 @@ Map<String, Integer> result = task
 ``` 
 
 To define a Mapper just extend the Mapper class and implement your algorithm in the map method.
+
 ```java
 public class MyMapper extends Mapper<Integer, Integer, String, Integer> {
   @Override
@@ -103,6 +106,7 @@ public class MyMapper extends Mapper<Integer, Integer, String, Integer> {
 ```
 
 For reducing algorithms you need to implement the Reducer class. For Reducer implementation that are capable of running in distributed environments and (maybe multiple times) can be marked with @Distributable or by implementing DistributableReducer.
+
 ```java
 @Distributable
 public static class MyReducer implements Reducer<String, Integer>
@@ -119,6 +123,7 @@ public static class MyReducer implements Reducer<String, Integer>
   }
 }
 ```
+
 ```java
 public static class MyReducer implements DistributableReducer<String, Integer>
 {
